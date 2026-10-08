@@ -1,0 +1,35 @@
+"""Settings from the environment. A .env file is loaded if present, with no extra dependency."""
+import os
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+
+
+def _load_dotenv(path: Path) -> None:
+    if not path.exists():
+        return
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        os.environ.setdefault(key.strip(), value.strip())
+
+
+_load_dotenv(ROOT / ".env")
+
+DB_PATH = Path(os.environ.get("DB_PATH", "data/event_seeker.db"))
+if not DB_PATH.is_absolute():
+    DB_PATH = ROOT / DB_PATH
+FETCH_INTERVAL_MINUTES = int(os.environ.get("FETCH_INTERVAL_MINUTES", "60"))
+HOST = os.environ.get("HOST", "0.0.0.0")
+PORT = int(os.environ.get("PORT", "8765"))
+WEB_DIR = ROOT / "web"  # built UI files, served at / when the folder exists
+
+SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com")
+SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
+SMTP_USER = os.environ.get("SMTP_USER", "").strip()
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "").replace(" ", "")  # Google displays the password with spaces
+
+# Global switch, off by default: no email goes to any subscriber and alerts wait in the queue
+EMAIL_ENABLED = os.environ.get("EMAIL_ENABLED", "false").strip().lower() in ("1", "true", "yes", "on")
