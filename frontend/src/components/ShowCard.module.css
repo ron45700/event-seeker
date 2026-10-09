@@ -254,10 +254,6 @@
   color: var(--text-muted);
 }
 
-.stampLayer {
-  display: contents;
-}
-
 .stamp {
   position: absolute;
   inset: 0;
@@ -286,58 +282,10 @@
   transform: rotate(-7deg);
 }
 
-.infoButton {
+/* The "i" sits beside the stamp and is the only part of it that takes taps. */
+.info {
   pointer-events: auto;
-  display: grid;
-  place-items: center;
-  width: var(--tap);
-  height: var(--tap);
   margin-inline-start: -4px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #fff;
-  position: relative;
-}
-
-.infoButton::before {
-  content: '';
-  position: absolute;
-  inset: 8px;
-  border-radius: 50%;
-  background: rgb(0 0 0 / 0.55);
-}
-
-.infoButton svg {
-  position: relative;
-}
-
-.explain {
-  position: absolute;
-  inset: 0;
-  z-index: 3;
-  display: flex;
-  align-items: center;
-  padding: 16px 14px;
-  padding-inline-end: 40px;
-  background: var(--overlay);
-  color: var(--text);
-  font-size: 0.875rem;
-  line-height: 1.45;
-  overflow-y: auto;
-}
-
-.explainClose {
-  position: absolute;
-  top: 0;
-  inset-inline-end: 0;
-  display: grid;
-  place-items: center;
-  width: var(--tap);
-  height: var(--tap);
-  border: 0;
-  background: transparent;
-  color: var(--text-muted);
 }
 
 /* Body */

@@ -18,7 +18,7 @@ export function App() {
 
   return (
     <div className={styles.app}>
-      <NavBar route={route} />
+      <NavBar route={route} query={filters.query} onQueryChange={(query) => setFilters((f) => ({ ...f, query }))} />
       <main className={styles.main}>
         {route.name === 'shows' && <Shows route={route} filters={filters} onFiltersChange={setFilters} />}
         {route.name === 'artists' && <MyArtists />}

@@ -1,0 +1,70 @@
+/* A 44px target drawn as a smaller disc over the poster. */
+.button {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+}
+
+.button::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 50%;
+  background: rgb(0 0 0 / 0.55);
+}
+
+.button[aria-expanded='true']::before {
+  background: rgb(0 0 0 / 0.8);
+  box-shadow: 0 0 0 2px #fff;
+}
+
+.button svg {
+  position: relative;
+}
+
+.tip {
+  position: fixed;
+  z-index: 60;
+  width: max-content;
+  max-width: min(280px, calc(100vw - 16px));
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  line-height: 1.45;
+  text-align: start;
+  box-shadow: 0 10px 28px rgb(0 0 0 / 0.28);
+}
+
+/* The arrow: a rotated square sharing the tip's border, pointing at the button. */
+.tip::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--arrow-left, 50%) - 6px);
+  width: 12px;
+  height: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  transform: rotate(45deg);
+}
+
+.tip[data-side='below']::before {
+  top: -7px;
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.tip[data-side='above']::before {
+  bottom: -7px;
+  border-left: 0;
+  border-top: 0;
+}

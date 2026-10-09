@@ -59,10 +59,10 @@ class ZappaSource(Source):
         return records
 
     def _home_posters(self) -> dict[str, str]:
-        """Event id -> poster URL from the home page. Covers events whose listing has no JSON-LD.
+        """Event id -> poster URL from the home page.
 
         Best effort: the home page shows only part of each venue's events, and a failure here
-        just leaves those few cards without artwork.
+        just means every card uses the JSON-LD artwork instead.
         """
         try:
             time.sleep(self.PAGE_DELAY)
@@ -117,10 +117,12 @@ class ZappaSource(Source):
         url = BASE_URL + path.group(0) if path else ld.get("url") or BASE_URL
 
         images = ld.get("image") or []
-        # A few events have no JSON-LD; for those, fall back to the home page poster if any.
-        # (The event pages themselves reject non-browser clients, so they are never fetched.)
-        image = next((i for i in images if "artwork" in i), images[0] if images else None)
-        image = image or record.get("poster")
+        # Prefer the home page poster: it is portrait and fills a card, while the JSON-LD
+        # artwork is a wide banner. The home page lists only part of each venue's events, so
+        # the rest fall back to the artwork. (Event pages reject non-browser clients and are
+        # never fetched.)
+        artwork = next((i for i in images if "artwork" in i), images[0] if images else None)
+        image = record.get("poster") or artwork
 
         return Event(
             source=self.name,

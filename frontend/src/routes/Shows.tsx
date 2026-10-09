@@ -1,5 +1,4 @@
 import { useDeferredValue, useEffect, useMemo, useState } from 'react'
-import { CategoryBar } from '../components/CategoryBar'
 import { FilterBar } from '../components/FilterBar'
 import { FollowSheet } from '../components/FollowSheet'
 import { ShowGrid } from '../components/ShowGrid'
@@ -63,10 +62,10 @@ export function Shows({ route, filters, onFiltersChange }: Props) {
   return (
     <>
       <h1 className="sr-only">{category ? CATEGORY_LABELS[category] : 'כל האירועים'}</h1>
-      <CategoryBar active={category} />
       <FilterBar
         filters={filters}
         onChange={onFiltersChange}
+        category={category}
         venues={venues}
         signedIn={signedIn}
         onMineNeedsSignIn={() => navigate(signInHref(hrefFor('shows', { category })))}

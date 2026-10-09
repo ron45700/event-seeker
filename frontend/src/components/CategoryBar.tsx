@@ -1,28 +1,25 @@
-import { CATEGORY_LABELS } from '../lib/categories'
+import { categorySegments } from '../lib/categories'
 import { hrefFor } from '../lib/router'
 import styles from './CategoryBar.module.css'
 
 /**
- * Category buttons under the header. Picking a category narrows the list; picking the
- * active one again (or "all events" in the nav) clears it. Search, venue and the toggles
- * are screen state and are kept either way.
+ * The category as one segmented group: "all events" (no category, the default), then each
+ * category from the label map. Search, venue and the toggles are screen state and are kept
+ * when the category changes.
  */
 export function CategoryBar({ active }: { active: string | null }) {
   return (
-    <nav className={styles.bar} aria-label="קטגוריות">
-      {Object.entries(CATEGORY_LABELS).map(([category, label]) => {
-        const current = active === category
-        return (
-          <a
-            key={category}
-            href={current ? hrefFor('shows') : hrefFor('shows', { category })}
-            className={styles.category}
-            aria-current={current ? 'true' : undefined}
-          >
-            {label}
-          </a>
-        )
-      })}
+    <nav className={styles.segments} aria-label="סוג אירוע">
+      {categorySegments().map(({ category, label }) => (
+        <a
+          key={category ?? 'all'}
+          href={hrefFor('shows', { category })}
+          className={styles.segment}
+          aria-current={active === category ? 'true' : undefined}
+        >
+          {label}
+        </a>
+      ))}
     </nav>
   )
 }

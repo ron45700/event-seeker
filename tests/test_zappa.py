@@ -56,7 +56,7 @@ def test_field_mapping(source):
     assert event.title == "טונה"
     assert event.starts_at == datetime(2026, 10, 17, 21, 0)
     assert event.url == "https://www.zappa-club.co.il/event/טונה-זאפה-אמפי-שוני-21970383/"
-    assert event.image_url.endswith("/teaser/evo/artwork/2026/tunastark-artwork.jpg")
+    assert event.image_url.endswith("/teaser/evo/1x1/2026/tunastar-poster.jpg")
     assert event.availability == "unavailable"
     assert by_id(source, "22027034").availability == "available"
 
@@ -67,11 +67,15 @@ def test_guests_line_goes_to_artists(source):
     assert "אורחים: אסף אמדורסקי וערן צור" in event.artists
 
 
-def test_events_without_json_ld_get_the_home_page_poster(source):
+def test_home_page_poster_is_preferred_and_artwork_is_the_fallback(source):
+    # on the home page, with JSON-LD: the portrait poster wins over the wide artwork
+    assert by_id(source, "21970383").image_url.endswith("/tunastar-poster.jpg")
+    # on the home page, no JSON-LD
     assert by_id(source, "21935095").image_url == (
         "https://www.zappa-club.co.il/obj/media/IL-eventim/teaser/evo/1x1/2026/danis26-poster.jpg")
-    assert by_id(source, "21756520").image_url.endswith("/NadavDagon-poster.jpg")
-    assert by_id(source, "21970383").image_url.endswith("tunastark-artwork.jpg")  # JSON-LD still wins
+    # every event on these first pages is on the home page; the artwork fallback is
+    # covered by test_home_page_failure_only_costs_the_posters
+    assert all("/teaser/evo/1x1/" in e.image_url for e in source.events)
     assert not [u for u in source.requests if "/event/" in u]  # event pages are never requested
 
 
@@ -84,6 +88,7 @@ def test_home_page_failure_only_costs_the_posters():
 
     events = {e.external_id: e for e in NoHome().fetch()}
     assert len(events) == 30 and events["21935095"].image_url is None
+    assert events["21970383"].image_url.endswith("tunastark-artwork.jpg")
 
 
 def test_pagination_follows_pnum_until_a_page_adds_nothing(monkeypatch):

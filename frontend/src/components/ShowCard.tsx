@@ -1,10 +1,11 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useId } from 'react'
 import { OFF_SALE_NOTICE, offSale, ticketsLeftText } from '../lib/availability'
 import { formatPrice, monthShort, parseLocal, shortDate, timeOfDay, weekday } from '../lib/format'
 import type { ShowEvent } from '../lib/types'
 import { venueProps } from '../lib/venueColor'
 import { CardArt } from './CardArt'
-import { CloseIcon, InfoIcon, StarIcon } from './icons'
+import { StarIcon } from './icons'
+import { InfoTip } from './InfoTip'
 import styles from './ShowCard.module.css'
 import { VenueBadge } from './VenueBadge'
 
@@ -117,62 +118,10 @@ export function ShowCard({ event, onFollow }: Props) {
 /** "Sold out" / "not available" stamped across the poster, with an "i" that explains it. */
 function OffSaleStamp({ kind }: { kind: keyof typeof OFF_SALE_NOTICE }) {
   const notice = OFF_SALE_NOTICE[kind]
-  const [open, setOpen] = useState(false)
-  const rootRef = useRef<HTMLDivElement>(null)
-  const buttonRef = useRef<HTMLButtonElement>(null)
-  const panelId = useId()
-
-  useEffect(() => {
-    if (!open) return
-    const onPointer = (e: PointerEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) setOpen(false)
-    }
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setOpen(false)
-        buttonRef.current?.focus()
-      }
-    }
-    document.addEventListener('pointerdown', onPointer)
-    document.addEventListener('keydown', onKey)
-    return () => {
-      document.removeEventListener('pointerdown', onPointer)
-      document.removeEventListener('keydown', onKey)
-    }
-  }, [open])
-
   return (
-    <div className={styles.stampLayer} ref={rootRef}>
-      <div className={styles.stamp}>
-        <span className={styles.stampLabel}>{notice.label}</span>
-        <button
-          ref={buttonRef}
-          type="button"
-          className={styles.infoButton}
-          aria-expanded={open}
-          aria-controls={panelId}
-          aria-label={`מה זה אומר: ${notice.label}`}
-          onClick={() => setOpen((v) => !v)}
-        >
-          <InfoIcon width={18} height={18} />
-        </button>
-      </div>
-      {open && (
-        <div id={panelId} className={styles.explain} role="note">
-          <p>{notice.explanation}</p>
-          <button
-            type="button"
-            className={styles.explainClose}
-            aria-label="סגירת ההסבר"
-            onClick={() => {
-              setOpen(false)
-              buttonRef.current?.focus()
-            }}
-          >
-            <CloseIcon width={18} height={18} />
-          </button>
-        </div>
-      )}
+    <div className={styles.stamp}>
+      <span className={styles.stampLabel}>{notice.label}</span>
+      <InfoTip className={styles.info} label={`מה זה אומר: ${notice.label}`} text={notice.explanation} />
     </div>
   )
 }

@@ -1,104 +1,73 @@
-.bar {
-  position: sticky;
-  top: var(--stick-top);
-  z-index: 20;
-  background: var(--bg);
+/* Row 2: categories on the start side (right), toggles pushed to the end side (left). */
+.categoryRow {
+  display: flex;
+  align-items: center;
+  gap: 12px 24px;
+  padding: 8px var(--gutter) 4px;
 }
 
-/* Phone: search and the sheet button on one row. */
-.inner {
+.rowToggles {
+  display: none;
+}
+
+@media (min-width: 600px) {
+  .categoryRow {
+    padding-top: 16px;
+  }
+
+  .rowToggles {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-inline-start: auto;
+  }
+}
+
+/* Row 3: the venue chips, tablet and up. */
+.venueRow {
+  display: none;
+}
+
+@media (min-width: 600px) {
+  .venueRow {
+    display: block;
+    padding: 8px var(--gutter) 4px;
+  }
+}
+
+/* Phone: the sticky search bar. Hidden from tablet width up, where the header has the
+   search; its measured height then drops to 0, and the month headings stick under the
+   header alone. */
+.phoneBar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 8px var(--gutter);
+  background: var(--bg);
 }
 
-/* Tablet and up: the search centred on its own row, chips and toggles below. */
 @media (min-width: 600px) {
-  .inner {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-areas:
-      'search search'
-      'venues toggles';
-    gap: 10px 24px;
-    padding-block: 12px 10px;
+  .phoneBar {
+    display: none;
   }
 }
 
-/* Search */
-
-.search {
-  grid-area: search;
-  position: relative;
+.phoneSearch {
   flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
 }
-
-@media (min-width: 600px) {
-  .search {
-    justify-self: center;
-    width: min(520px, 100%);
-  }
-}
-
-.searchIcon {
-  position: absolute;
-  inset-inline-start: 12px;
-  width: 20px;
-  height: 20px;
-  color: var(--text-muted);
-  pointer-events: none;
-}
-
-.input {
-  width: 100%;
-  height: 46px;
-  padding-inline: 42px 44px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-control);
-  background: var(--surface-raised);
-  /* 16px or more keeps iOS from zooming in on focus. */
-  font-size: 1rem;
-  appearance: none;
-}
-
-.input::placeholder {
-  color: var(--text-muted);
-}
-
-.input::-webkit-search-cancel-button {
-  display: none;
-}
-
-.input:focus-visible {
-  outline-offset: 0;
-}
-
-.clear {
-  position: absolute;
-  inset-inline-end: 1px;
-  display: grid;
-  place-items: center;
-  width: var(--tap);
-  height: var(--tap);
-  border: 0;
-  background: transparent;
-  color: var(--text-muted);
-}
-
-/* Phone: one button opens the sheet */
 
 .sheetButton {
+  flex: none;
   display: inline-flex;
   align-items: center;
   gap: 6px;
   height: 46px;
   padding-inline: 12px 14px;
   border: 1px solid var(--line);
-  border-radius: var(--radius-control);
+  border-radius: 999px;
   background: var(--surface-raised);
   font-weight: 500;
 }
@@ -114,30 +83,6 @@
   color: var(--accent-ink);
   font-size: 0.75rem;
   font-weight: 600;
-}
-
-.venues,
-.toggles {
-  display: none;
-}
-
-@media (min-width: 600px) {
-  .sheetButton {
-    display: none;
-  }
-
-  .venues {
-    grid-area: venues;
-    display: block;
-    min-width: 0;
-  }
-
-  .toggles {
-    grid-area: toggles;
-    display: flex;
-    align-items: center;
-    gap: 20px;
-  }
 }
 
 /* Venue chips: a single row that scrolls sideways and never wraps. The fade marks an edge

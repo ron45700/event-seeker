@@ -1,32 +1,43 @@
-.bar {
+/* Phone: a full-width three-way control. From tablet width up: sized to its labels. */
+.segments {
   display: flex;
-  gap: 8px;
-  padding: 8px var(--gutter) 4px;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.bar::-webkit-scrollbar {
-  display: none;
-}
-
-.category {
-  flex: none;
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--tap);
-  padding-inline: 18px;
+  width: 100%;
+  padding: 3px;
   border: 1px solid var(--line);
   border-radius: 999px;
-  color: var(--text);
+  background: var(--surface);
+}
+
+@media (min-width: 600px) {
+  .segments {
+    display: inline-flex;
+    width: auto;
+  }
+}
+
+.segment {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding-inline: 12px;
+  border-radius: 999px;
+  color: var(--text-muted);
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
 }
 
+@media (min-width: 600px) {
+  .segment {
+    flex: none;
+    padding-inline: 20px;
+  }
+}
+
 /* Inverted rather than amber: amber means "an artist you follow". */
-.category[aria-current='true'] {
-  border-color: var(--text);
+.segment[aria-current='true'] {
   background: var(--text);
   color: var(--bg);
 }

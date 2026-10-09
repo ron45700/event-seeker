@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CATEGORY_LABELS, categoryFromParam, isKnownCategory } from './categories'
+import { ALL_EVENTS_LABEL, CATEGORY_LABELS, categoryFromParam, categorySegments, isKnownCategory } from './categories'
 import { activeFilterCount, applyFilters, inCategory, matchesQuery, NO_FILTERS, normalize, venueChoices } from './search'
 import type { ShowEvent } from './types'
 
@@ -60,6 +60,15 @@ describe('categories', () => {
     expect(isKnownCategory('standup')).toBe(true)
     expect(isKnownCategory('theatre')).toBe(false)
     expect(isKnownCategory('toString')).toBe(false)
+  })
+
+  it('builds the segmented control with "all events" first and selected for no category', () => {
+    expect(categorySegments()).toEqual([
+      { category: null, label: ALL_EVENTS_LABEL },
+      { category: 'music', label: 'הופעות' },
+      { category: 'standup', label: 'סטנד אפ' },
+    ])
+    expect(ALL_EVENTS_LABEL).toBe('כל האירועים')
   })
 
   it('ignores an unknown or missing category parameter', () => {

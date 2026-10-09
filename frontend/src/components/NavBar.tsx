@@ -1,35 +1,33 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
-import { categoryFromParam } from '../lib/categories'
 import { useHeightVar } from '../lib/hooks'
-import { currentHash, hrefFor, signInHref, type Route, type RouteName } from '../lib/router'
+import { currentHash, hrefFor, navigate, signInHref, type Route, type RouteName } from '../lib/router'
 import { useSession } from '../lib/session'
 import { ChevronDownIcon, MoonIcon, StarIcon, SunIcon, TicketIcon } from './icons'
 import styles from './NavBar.module.css'
+import { SearchField } from './SearchField'
 import { useToast } from './Toast'
 
-const TABS: { route: RouteName; label: string; icon: (active: boolean) => ReactNode }[] = [
-  { route: 'shows', label: 'כל האירועים', icon: () => <TicketIcon /> },
-  { route: 'artists', label: 'האמנים שלי', icon: (active) => <StarIcon filled={active} /> },
-]
-
-/** "All events" is current only on the events screen with no category picked. */
-function isCurrent(tab: RouteName, route: Route): boolean {
-  if (tab === 'shows') return route.name === 'shows' && categoryFromParam(route.category) === null
-  return route.name === tab
+interface Props {
+  route: Route
+  query: string
+  onQueryChange: (query: string) => void
 }
 
 /**
- * Top bar. Right-to-left, so the start side is on the right: the account control and the
- * theme toggle there, then the tabs and the logo on the left.
+ * Row 1, sticky from tablet width up. Right-to-left, so in DOM order: the actions on the
+ * right (account at the edge, then the theme toggle, then "my artists"), the search pill
+ * in the centre, the logo on the left. On a phone the search moves to its own sticky bar
+ * and "my artists" to the bottom tab bar.
  */
-export function NavBar({ route }: { route: Route }) {
+export function NavBar({ route, query, onQueryChange }: Props) {
   const { me, ready } = useSession()
   const heightRef = useHeightVar('--topbar-h')
+  const onArtists = route.name === 'artists'
 
   return (
     <header className={styles.topbar} ref={heightRef}>
       <div className={styles.inner}>
-        <div className={styles.account}>
+        <div className={styles.actions}>
           {me ? (
             <UserMenu email={me.email} />
           ) : (
@@ -42,20 +40,22 @@ export function NavBar({ route }: { route: Route }) {
             )
           )}
           <ThemeToggle />
+          <a href={hrefFor('artists')} className={styles.artists} aria-current={onArtists ? 'page' : undefined}>
+            <StarIcon filled={onArtists} width={20} height={20} />
+            <span className={styles.artistsLabel}>האמנים שלי</span>
+          </a>
         </div>
 
-        <nav className={styles.tabs} aria-label="ניווט ראשי">
-          {TABS.map((tab) => (
-            <a
-              key={tab.route}
-              href={hrefFor(tab.route)}
-              className={styles.tab}
-              aria-current={isCurrent(tab.route, route) ? 'page' : undefined}
-            >
-              {tab.label}
-            </a>
-          ))}
-        </nav>
+        <div className={styles.search}>
+          <SearchField
+            value={query}
+            onChange={(next) => {
+              onQueryChange(next)
+              // Searching from another screen takes you to the results.
+              if (route.name !== 'shows') navigate(hrefFor('shows'))
+            }}
+          />
+        </div>
 
         <a href={hrefFor('shows')} className={styles.logo} lang="en" dir="ltr">
           event seeker
@@ -83,7 +83,7 @@ function ThemeToggle() {
   )
 }
 
-/** The signed-in control: the first letter (and, when there is room, the email) opening a menu. */
+/** The signed-in control: the first letter of the email, opening a menu with sign-out. */
 function UserMenu({ email }: { email: string }) {
   const { signOut } = useSession()
   const [open, setOpen] = useState(false)
@@ -124,9 +124,6 @@ function UserMenu({ email }: { email: string }) {
         <span className={styles.avatar} aria-hidden="true">
           {email.charAt(0).toUpperCase()}
         </span>
-        <bdi dir="ltr" className={styles.email}>
-          {email}
-        </bdi>
         <ChevronDownIcon width={18} height={18} />
       </button>
       {open && (
@@ -151,12 +148,20 @@ function UserMenu({ email }: { email: string }) {
   )
 }
 
-/** Bottom tab bar on phones, within thumb reach and above the home indicator. */
+const TABS: { route: RouteName; label: string; icon: (active: boolean) => ReactNode }[] = [
+  { route: 'shows', label: 'כל האירועים', icon: () => <TicketIcon /> },
+  { route: 'artists', label: 'האמנים שלי', icon: (active) => <StarIcon filled={active} /> },
+]
+
+/**
+ * Bottom tab bar on phones, within thumb reach and above the home indicator. It switches
+ * screens; the category is picked in the segmented control on the events screen.
+ */
 export function TabBar({ route }: { route: Route }) {
   return (
     <nav className={styles.tabbar} aria-label="ניווט ראשי">
       {TABS.map(({ route: target, label, icon }) => {
-        const active = isCurrent(target, route)
+        const active = route.name === target
         return (
           <a
             key={target}

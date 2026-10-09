@@ -16,7 +16,6 @@
   --accent-strong: #f4b740; /* lines and text in the accent colour, on --bg / --surface */
   --danger: #ff9a8f;
   --scrim: rgb(5 7 12 / 0.6);
-  --overlay: rgb(16 19 28 / 0.94); /* explanation panel over a poster */
   --thumb: #ede9e0; /* switch thumb when off */
   --thumb-shadow: none;
   --track-off: #636c82; /* switch track when off: 3:1 against --bg and --surface */
@@ -56,7 +55,6 @@
   --accent-strong: #8a5a00;
   --danger: #b3261e;
   --scrim: rgb(22 26 36 / 0.45);
-  --overlay: rgb(255 255 255 / 0.95);
   --thumb: #ffffff;
   --thumb-shadow: 0 1px 3px rgb(22 26 36 / 0.35);
   --track-off: #7b8596;

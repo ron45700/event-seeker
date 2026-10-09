@@ -12,30 +12,68 @@
   }
 }
 
+/* Phone: actions | logo. Tablet and up: actions | search | logo, with equal side columns
+   so the search sits in the true centre (the side columns never shrink below their
+   content, so a crowded row shifts the search a little instead of overlapping). */
 .inner {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(max-content, 1fr) auto;
+  grid-template-areas: 'actions logo';
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   max-width: var(--content-max);
   margin-inline: auto;
   padding: 8px var(--gutter);
   min-height: 60px;
 }
 
-/* Start side (right): account and theme. */
-.account {
+@media (min-width: 600px) {
+  .inner {
+    grid-template-columns: minmax(max-content, 1fr) minmax(200px, 560px) minmax(max-content, 1fr);
+    grid-template-areas: 'actions search logo';
+    gap: 16px;
+  }
+}
+
+.actions {
+  grid-area: actions;
+  justify-self: start;
   display: flex;
   align-items: center;
   gap: 4px;
-  min-width: 0;
+}
+
+.search {
+  grid-area: search;
+  display: none;
+}
+
+@media (min-width: 600px) {
+  .search {
+    display: block;
+  }
+}
+
+.logo {
+  grid-area: logo;
+  justify-self: end;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2.5rem;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  text-decoration: none;
+  /* Karantina sits high on its line; nudge it onto the shared baseline. */
+  padding-top: 6px;
 }
 
 .signIn {
   display: inline-flex;
   align-items: center;
   min-height: var(--tap);
-  padding-inline: 16px;
-  border-radius: var(--radius-control);
+  padding-inline: 18px;
+  border-radius: 999px;
   background: var(--accent);
   color: var(--accent-ink);
   font-weight: 600;
@@ -48,73 +86,75 @@
   width: var(--tap);
   height: var(--tap);
   border: 0;
-  border-radius: var(--radius-control);
+  border-radius: 50%;
   background: transparent;
   color: var(--text-muted);
 }
 
-/* End side (left): the tabs and the logo, pushed together to the far edge. On a phone the
-   tabs live in the bottom bar and the logo alone takes the edge. */
-.tabs {
+/* "My artists": in the bottom tab bar on a phone, a star from 600px, star and label from
+   1024px. The label stays in the accessibility tree at every width. */
+.artists {
   display: none;
-  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: var(--tap);
+  min-height: var(--tap);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text);
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
-.logo {
-  margin-inline-start: auto;
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 2.5rem;
-  line-height: 1;
-  letter-spacing: 0.01em;
+.artists[aria-current='page'] {
+  border-color: var(--accent-strong);
+  color: var(--accent-strong);
+}
+
+.artistsLabel {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
   white-space: nowrap;
-  text-decoration: none;
-  /* Karantina sits high on its line; nudge it onto the shared baseline. */
-  padding-top: 6px;
 }
 
 @media (min-width: 600px) {
-  .tabs {
-    display: flex;
-    margin-inline-start: auto;
-  }
-
-  .logo {
-    margin-inline-start: 8px;
+  .artists {
+    display: inline-flex;
   }
 }
 
-.tab {
-  display: inline-flex;
-  align-items: center;
-  min-height: var(--tap);
-  padding-inline: 14px;
-  border-radius: var(--radius-control);
-  color: var(--text-muted);
-  text-decoration: none;
-  font-weight: 500;
-}
+@media (min-width: 1024px) {
+  .artists {
+    padding-inline: 14px 16px;
+  }
 
-.tab[aria-current='page'] {
-  color: var(--text);
-  background: var(--surface-raised);
+  .artistsLabel {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
+  }
 }
 
 /* Signed-in control */
 
 .userMenu {
   position: relative;
-  min-width: 0;
 }
 
 .userButton {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   min-height: var(--tap);
-  max-width: 100%;
-  padding: 4px 6px;
-  padding-inline-end: 10px;
+  padding: 5px;
+  padding-inline-end: 8px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: transparent;
@@ -132,22 +172,6 @@
   color: var(--accent-ink);
   font-weight: 600;
   font-size: 0.9375rem;
-}
-
-.email {
-  display: none;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 24ch;
-  font-size: 0.875rem;
-}
-
-@media (min-width: 900px) {
-  .email {
-    display: block;
-  }
 }
 
 .menu {

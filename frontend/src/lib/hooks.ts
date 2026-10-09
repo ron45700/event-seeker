@@ -44,6 +44,19 @@ export function useEvents(query: EventQuery | null, key: string) {
   return { state, retry, refresh }
 }
 
+/** Whether a media query matches, kept up to date (e.g. a mouse plugged into an iPad). */
+export function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(() => window.matchMedia(query).matches)
+  useEffect(() => {
+    const list = window.matchMedia(query)
+    const update = () => setMatches(list.matches)
+    update()
+    list.addEventListener('change', update)
+    return () => list.removeEventListener('change', update)
+  }, [query])
+  return matches
+}
+
 /** Venues with upcoming shows, for the subscription venue picker. Empty on failure. */
 export function useVenues(): Venue[] {
   const [venues, setVenues] = useState<Venue[]>([])

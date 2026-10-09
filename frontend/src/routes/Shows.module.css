@@ -14,7 +14,7 @@
    under the filter bar so the month stays known while scrolling. */
 .monthHeading {
   position: sticky;
-  top: calc(var(--stick-top) + var(--filterbar-h, 62px));
+  top: calc(var(--stick-top) + var(--filterbar-h, 0px));
   z-index: 10;
   display: flex;
   align-items: baseline;

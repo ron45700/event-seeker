@@ -3,14 +3,18 @@ import { eventCount } from '../lib/format'
 import { useHeightVar } from '../lib/hooks'
 import { activeFilterCount, type ShowFilters } from '../lib/search'
 import { venueProps } from '../lib/venueColor'
-import { CloseIcon, SearchIcon, SlidersIcon } from './icons'
+import { CategoryBar } from './CategoryBar'
+import { SlidersIcon } from './icons'
 import styles from './FilterBar.module.css'
+import { SearchField } from './SearchField'
 import { Sheet, SheetButton } from './Sheet'
 import { Toggle } from './Toggle'
 
 interface Props {
   filters: ShowFilters
   onChange: (filters: ShowFilters) => void
+  /** The current category, or null for all events. */
+  category: string | null
   /** Venue chips: the venues with events in the current category. */
   venues: string[]
   signedIn: boolean
@@ -21,11 +25,15 @@ interface Props {
 }
 
 /**
- * Sticky search and filters. On a phone the venue and toggle filters live in a bottom
- * sheet behind one button. From tablet width up: the search centred on the first row,
- * venue chips and toggles on the second.
+ * The filters under the header (whose search field is the one from tablet width up).
+ *
+ * Tablet and up: row 2 holds the category group on the right and the two toggles on the
+ * left; row 3 is the venue chips. Both scroll away with the page; only the header sticks.
+ *
+ * Phone: the category group as a full-width segmented control, then a sticky bar with the
+ * search and a button that opens a sheet with the venue chips and the toggles.
  */
-export function FilterBar({ filters, onChange, venues, signedIn, onMineNeedsSignIn, matching }: Props) {
+export function FilterBar({ filters, onChange, category, venues, signedIn, onMineNeedsSignIn, matching }: Props) {
   const [sheetOpen, setSheetOpen] = useState(false)
   const heightRef = useHeightVar('--filterbar-h')
   const hidden = activeFilterCount(filters)
@@ -50,51 +58,33 @@ export function FilterBar({ filters, onChange, venues, signedIn, onMineNeedsSign
 
   return (
     <>
-      <div className={styles.bar} ref={heightRef}>
-        <div className={styles.inner}>
-          <div className={styles.search}>
-            <SearchIcon className={styles.searchIcon} />
-            <input
-              type="search"
-              className={styles.input}
-              placeholder="חיפוש אמן או אירוע"
-              aria-label="חיפוש אירועים"
-              enterKeyHint="search"
-              autoComplete="off"
-              value={filters.query}
-              onChange={(e) => onChange({ ...filters, query: e.target.value })}
-            />
-            {filters.query && (
-              <button
-                type="button"
-                className={styles.clear}
-                aria-label="ניקוי החיפוש"
-                onClick={() => onChange({ ...filters, query: '' })}
-              >
-                <CloseIcon width={20} height={20} />
-              </button>
-            )}
-          </div>
+      {/* Row 2. Right-to-left, so the first child (the categories) is on the right. */}
+      <div className={styles.categoryRow}>
+        <CategoryBar active={category} />
+        <div className={styles.rowToggles}>{toggles(false)}</div>
+      </div>
 
-          <button
-            type="button"
-            className={styles.sheetButton}
-            aria-haspopup="dialog"
-            onClick={() => setSheetOpen(true)}
-          >
-            <SlidersIcon width={20} height={20} />
-            <span>סינון</span>
-            {hidden > 0 && (
-              <span className={styles.count}>
-                {hidden}
-                <span className="sr-only"> פעילים</span>
-              </span>
-            )}
-          </button>
+      {/* Row 3, tablet and up. */}
+      <div className={styles.venueRow}>{chips}</div>
 
-          <div className={styles.venues}>{chips}</div>
-          <div className={styles.toggles}>{toggles(false)}</div>
-        </div>
+      {/* Phone only: sticky search and the filter sheet. */}
+      <div className={styles.phoneBar} ref={heightRef}>
+        <SearchField className={styles.phoneSearch} value={filters.query} onChange={(query) => onChange({ ...filters, query })} />
+        <button
+          type="button"
+          className={styles.sheetButton}
+          aria-haspopup="dialog"
+          onClick={() => setSheetOpen(true)}
+        >
+          <SlidersIcon width={20} height={20} />
+          <span>סינון</span>
+          {hidden > 0 && (
+            <span className={styles.count}>
+              {hidden}
+              <span className="sr-only"> פעילים</span>
+            </span>
+          )}
+        </button>
       </div>
 
       <Sheet open={sheetOpen} onClose={() => setSheetOpen(false)} title="סינון">
