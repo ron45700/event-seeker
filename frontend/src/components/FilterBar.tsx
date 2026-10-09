@@ -1,33 +1,52 @@
-import { useState } from 'react'
-import { showCount } from '../lib/format'
+import { useCallback, useState } from 'react'
+import { eventCount } from '../lib/format'
 import { useHeightVar } from '../lib/hooks'
 import { activeFilterCount, type ShowFilters } from '../lib/search'
-import { venueStyle } from '../lib/venueColor'
-import { FilterSheet } from './FilterSheet'
+import { venueProps } from '../lib/venueColor'
 import { CloseIcon, SearchIcon, SlidersIcon } from './icons'
 import styles from './FilterBar.module.css'
+import { Sheet, SheetButton } from './Sheet'
 import { Toggle } from './Toggle'
 
 interface Props {
   filters: ShowFilters
   onChange: (filters: ShowFilters) => void
+  /** Venue chips: the venues with events in the current category. */
   venues: string[]
   signedIn: boolean
   /** Called when a signed-out visitor turns on "my artists only". */
   onMineNeedsSignIn: () => void
-  /** Shows matching the current filters, for the sheet's close button. */
+  /** Events matching the current filters, for the sheet's close button. */
   matching: number
 }
 
 /**
- * Sticky search and filters. On a phone the venue and "my artists" filters live in a
- * bottom sheet behind one button; from tablet width up they sit inline.
+ * Sticky search and filters. On a phone the venue and toggle filters live in a bottom
+ * sheet behind one button. From tablet width up: the search centred on the first row,
+ * venue chips and toggles on the second.
  */
 export function FilterBar({ filters, onChange, venues, signedIn, onMineNeedsSignIn, matching }: Props) {
   const [sheetOpen, setSheetOpen] = useState(false)
   const heightRef = useHeightVar('--filterbar-h')
   const hidden = activeFilterCount(filters)
-  const controls = { filters, onChange, venues, signedIn, onMineNeedsSignIn }
+
+  const chips = <VenueChips venues={venues} selected={filters.venue} onSelect={(venue) => onChange({ ...filters, venue })} />
+  const toggles = (stacked: boolean) => (
+    <>
+      <Toggle
+        label="רק האמנים שלי"
+        description={stacked ? (signedIn ? 'אירועים של אמנים שבמעקב' : 'זמין אחרי כניסה') : undefined}
+        checked={signedIn && filters.mine}
+        onChange={(mine) => (signedIn ? onChange({ ...filters, mine }) : onMineNeedsSignIn())}
+      />
+      <Toggle
+        label="הסתר לא זמינים"
+        description={stacked ? 'בלי אירועים שהכרטיסים להם אזלו או שאינם זמינים' : undefined}
+        checked={filters.hideOffSale}
+        onChange={(hideOffSale) => onChange({ ...filters, hideOffSale })}
+      />
+    </>
+  )
 
   return (
     <>
@@ -38,8 +57,8 @@ export function FilterBar({ filters, onChange, venues, signedIn, onMineNeedsSign
             <input
               type="search"
               className={styles.input}
-              placeholder="חיפוש אמן או הופעה"
-              aria-label="חיפוש הופעות"
+              placeholder="חיפוש אמן או אירוע"
+              aria-label="חיפוש אירועים"
               enterKeyHint="search"
               autoComplete="off"
               value={filters.query}
@@ -73,66 +92,81 @@ export function FilterBar({ filters, onChange, venues, signedIn, onMineNeedsSign
             )}
           </button>
 
-          <div className={styles.inline}>
-            <FilterControls {...controls} />
-          </div>
+          <div className={styles.venues}>{chips}</div>
+          <div className={styles.toggles}>{toggles(false)}</div>
         </div>
       </div>
 
-      <FilterSheet
-        open={sheetOpen}
-        onClose={() => setSheetOpen(false)}
-        doneLabel={matching > 0 ? `הצגת ${showCount(matching)}` : 'סגירה'}
-      >
-        <FilterControls {...controls} stacked />
-      </FilterSheet>
+      <Sheet open={sheetOpen} onClose={() => setSheetOpen(false)} title="סינון">
+        <div className={styles.sheetGroup}>
+          <h3 className={styles.groupLabel}>מקום</h3>
+          {chips}
+        </div>
+        <div className={styles.sheetToggles}>{toggles(true)}</div>
+        <SheetButton onClick={() => setSheetOpen(false)}>
+          {matching > 0 ? `הצגת ${eventCount(matching)}` : 'סגירה'}
+        </SheetButton>
+      </Sheet>
     </>
   )
 }
 
-interface ControlsProps extends Omit<Props, 'matching'> {
-  stacked?: boolean
+interface ChipsProps {
+  venues: string[]
+  selected: string
+  onSelect: (venue: string) => void
 }
 
-function FilterControls({ filters, onChange, venues, signedIn, onMineNeedsSignIn, stacked }: ControlsProps) {
-  return (
-    <div className={styles.controls} data-stacked={stacked || undefined}>
-      <div className={styles.group}>
-        {stacked && <h3 className={styles.groupLabel}>מקום</h3>}
-        <div className={styles.chips} role="group" aria-label="מקום">
-          <button
-            type="button"
-            className={styles.chip}
-            aria-pressed={!filters.venue}
-            onClick={() => onChange({ ...filters, venue: '' })}
-          >
-            כל המקומות
-          </button>
-          {venues.map((venue) => (
-            <button
-              key={venue}
-              type="button"
-              className={styles.chip}
-              data-venue
-              style={venueStyle(venue)}
-              aria-pressed={filters.venue === venue}
-              onClick={() => onChange({ ...filters, venue: filters.venue === venue ? '' : venue })}
-            >
-              <span className={styles.dot} aria-hidden="true" />
-              <bdi>{venue}</bdi>
-            </button>
-          ))}
-        </div>
-      </div>
+/** One row of venue chips that scrolls sideways instead of wrapping, fading at a cut edge. */
+function VenueChips({ venues, selected, onSelect }: ChipsProps) {
+  const [edges, setEdges] = useState({ start: false, end: false })
 
-      <div className={styles.mine}>
-        <Toggle
-          label="רק האמנים שלי"
-          description={stacked ? (signedIn ? 'הופעות של אמנים שבמעקב' : 'זמין אחרי כניסה') : undefined}
-          checked={signedIn && filters.mine}
-          onChange={(mine) => (signedIn ? onChange({ ...filters, mine }) : onMineNeedsSignIn())}
-        />
-      </div>
+  const measure = useCallback((row: HTMLElement) => {
+    // In a right-to-left row scrollLeft runs from 0 (start) to negative values (end). The
+    // slack absorbs the few pixels scroll snapping leaves against the focus-ring padding.
+    const SLACK = 8
+    const scrolled = Math.abs(row.scrollLeft)
+    const start = scrolled > SLACK
+    const end = scrolled + row.clientWidth < row.scrollWidth - SLACK
+    setEdges((prev) => (prev.start === start && prev.end === end ? prev : { start, end }))
+  }, [])
+
+  const rowRef = useCallback(
+    (row: HTMLDivElement | null) => {
+      if (!row) return
+      const observer = new ResizeObserver(() => measure(row))
+      observer.observe(row)
+      return () => observer.disconnect()
+    },
+    [measure],
+  )
+
+  return (
+    <div
+      ref={rowRef}
+      className={styles.chips}
+      role="group"
+      aria-label="מקום"
+      data-fade-start={edges.start || undefined}
+      data-fade-end={edges.end || undefined}
+      onScroll={(e) => measure(e.currentTarget)}
+    >
+      <button type="button" className={styles.chip} aria-pressed={!selected} onClick={() => onSelect('')}>
+        כל המקומות
+      </button>
+      {venues.map((venue) => (
+        <button
+          key={venue}
+          type="button"
+          className={styles.chip}
+          {...venueProps(venue)}
+          aria-pressed={selected === venue}
+          onClick={() => onSelect(selected === venue ? '' : venue)}
+        >
+          <span className={styles.dot} aria-hidden="true" />
+          <bdi>{venue}</bdi>
+        </button>
+      ))}
     </div>
   )
 }

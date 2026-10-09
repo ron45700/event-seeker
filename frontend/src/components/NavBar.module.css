@@ -1,6 +1,6 @@
 .topbar {
   padding-top: env(safe-area-inset-top, 0px);
-  background: var(--night);
+  background: var(--bg);
 }
 
 @media (min-width: 600px) {
@@ -8,44 +8,79 @@
     position: sticky;
     top: 0;
     z-index: 30;
-    border-bottom: 1px solid var(--rail);
+    border-bottom: 1px solid var(--line);
   }
 }
 
 .inner {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 16px;
   max-width: var(--content-max);
   margin-inline: auto;
-  padding: 10px var(--gutter) 4px;
+  padding: 8px var(--gutter);
   min-height: 60px;
 }
 
-@media (min-width: 600px) {
-  .inner {
-    padding-block: 6px;
-  }
+/* Start side (right): account and theme. */
+.account {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
 }
 
-.wordmark {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 2.75rem;
-  line-height: 1;
+.signIn {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding-inline: 16px;
+  border-radius: var(--radius-control);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
   text-decoration: none;
-  /* Karantina sits high on its line; nudge it onto the shared baseline. */
-  padding-top: 6px;
 }
 
+.iconButton {
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--text-muted);
+}
+
+/* End side (left): the tabs and the logo, pushed together to the far edge. On a phone the
+   tabs live in the bottom bar and the logo alone takes the edge. */
 .tabs {
   display: none;
   gap: 4px;
 }
 
+.logo {
+  margin-inline-start: auto;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2.5rem;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  text-decoration: none;
+  /* Karantina sits high on its line; nudge it onto the shared baseline. */
+  padding-top: 6px;
+}
+
 @media (min-width: 600px) {
   .tabs {
     display: flex;
+    margin-inline-start: auto;
+  }
+
+  .logo {
+    margin-inline-start: 8px;
   }
 }
 
@@ -55,32 +90,58 @@
   min-height: var(--tap);
   padding-inline: 14px;
   border-radius: var(--radius-control);
-  color: var(--fog);
+  color: var(--text-muted);
   text-decoration: none;
   font-weight: 500;
 }
 
 .tab[aria-current='page'] {
-  color: var(--paper);
-  background: var(--stage-raised);
+  color: var(--text);
+  background: var(--surface-raised);
 }
 
-.account {
+/* Signed-in control */
+
+.userMenu {
+  position: relative;
+  min-width: 0;
+}
+
+.userButton {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-inline-start: auto;
-  min-width: 0;
+  min-height: var(--tap);
+  max-width: 100%;
+  padding: 4px 6px;
+  padding-inline-end: 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+  font-size: 0.9375rem;
 }
 
 .email {
   display: none;
-  color: var(--fog);
-  font-size: 0.875rem;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 28ch;
+  max-width: 24ch;
+  font-size: 0.875rem;
 }
 
 @media (min-width: 900px) {
@@ -89,34 +150,44 @@
   }
 }
 
-.signIn,
-.signOut {
-  display: inline-flex;
-  align-items: center;
+.menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  inset-inline-start: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 240px;
+  max-width: calc(100vw - 2 * var(--gutter));
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: 0 12px 32px rgb(0 0 0 / 0.25);
+}
+
+.menuLabel {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.menuEmail {
+  overflow-wrap: anywhere;
+  font-weight: 500;
+}
+
+.menuAction {
   min-height: var(--tap);
-  padding-inline: 16px;
+  margin-top: 10px;
+  border: 1px solid var(--line);
   border-radius: var(--radius-control);
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.signIn {
-  background: var(--sodium);
-  color: var(--sodium-ink);
-}
-
-.signOut {
-  display: none;
-  border: 1px solid var(--rail);
   background: transparent;
-  color: var(--paper);
+  color: var(--text);
+  font-weight: 500;
 }
 
-@media (min-width: 600px) {
-  .signOut {
-    display: inline-flex;
-  }
-}
+/* Phone tab bar */
 
 .tabbar {
   position: fixed;
@@ -127,10 +198,10 @@
   grid-template-columns: 1fr 1fr;
   height: var(--tabbar-space);
   padding-bottom: env(safe-area-inset-bottom, 0px);
-  background: color-mix(in oklab, var(--night) 92%, transparent);
+  background: color-mix(in oklab, var(--bg) 92%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border-top: 1px solid var(--rail);
+  border-top: 1px solid var(--line);
 }
 
 @media (min-width: 600px) {
@@ -145,12 +216,12 @@
   align-items: center;
   justify-content: center;
   gap: 2px;
-  color: var(--fog);
+  color: var(--text-muted);
   text-decoration: none;
   font-size: 0.75rem;
   font-weight: 500;
 }
 
 .tabbarItem[aria-current='page'] {
-  color: var(--sodium);
+  color: var(--accent-strong);
 }

@@ -9,20 +9,20 @@ import { SignIn } from './routes/SignIn'
 
 export function App() {
   const route = useRoute()
-  // Kept here so search and filters survive a visit to another screen.
+  // Kept here so search and filters survive a visit to another screen and a category change.
   const [filters, setFilters] = useState<ShowFilters>(NO_FILTERS)
 
   useEffect(() => {
     window.scrollTo(0, 0)
-  }, [route])
+  }, [route.name, route.category])
 
   return (
     <div className={styles.app}>
       <NavBar route={route} />
       <main className={styles.main}>
-        {route === 'shows' && <Shows filters={filters} onFiltersChange={setFilters} />}
-        {route === 'artists' && <MyArtists />}
-        {route === 'signin' && <SignIn />}
+        {route.name === 'shows' && <Shows route={route} filters={filters} onFiltersChange={setFilters} />}
+        {route.name === 'artists' && <MyArtists />}
+        {route.name === 'signin' && <SignIn />}
       </main>
       <TabBar route={route} />
     </div>

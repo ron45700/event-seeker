@@ -1,4 +1,5 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState } from 'react'
+import { AddArtistForm } from '../components/AddArtistForm'
 import { CloseIcon, TrashIcon } from '../components/icons'
 import { ShowGrid } from '../components/ShowGrid'
 import { SkeletonGrid } from '../components/SkeletonGrid'
@@ -8,9 +9,9 @@ import { Toggle } from '../components/Toggle'
 import { VenueBadge } from '../components/VenueBadge'
 import { api, isUnreachable } from '../lib/api'
 import { useEvents, useVenues, type Load } from '../lib/hooks'
-import { hrefFor } from '../lib/router'
+import { hrefFor, signInHref } from '../lib/router'
 import { useSession } from '../lib/session'
-import type { Me, Subscription, Venue } from '../lib/types'
+import type { Me, Subscription } from '../lib/types'
 import styles from './MyArtists.module.css'
 
 /** Whose shows the side panel lists. justAdded adds the "alerts start now" note. */
@@ -33,7 +34,7 @@ export function MyArtists() {
 
   if (!me) {
     return (
-      <StateMessage title="האמנים שלי" action={{ label: 'כניסה', href: hrefFor('signin', 'artists') }}>
+      <StateMessage title="האמנים שלי" action={{ label: 'כניסה', href: signInHref(hrefFor('artists')) }}>
         כדי לעקוב אחרי אמנים ולקבל אימייל על הופעות חדשות, צריך להיכנס עם כתובת אימייל.
       </StateMessage>
     )
@@ -213,75 +214,6 @@ function Following({ me }: { me: Me }) {
         </section>
       </div>
     </div>
-  )
-}
-
-function AddArtistForm({ venues, onAdd }: { venues: Venue[]; onAdd: (artist: string, venue: string | null) => Promise<void> }) {
-  const [artist, setArtist] = useState('')
-  const [venue, setVenue] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  async function submit(e: FormEvent) {
-    e.preventDefault()
-    const name = artist.trim()
-    if (!name) {
-      setError('צריך לכתוב שם של אמן או להקה.')
-      return
-    }
-    setBusy(true)
-    setError(null)
-    try {
-      await onAdd(name, venue || null)
-      setArtist('')
-      setVenue('')
-    } catch (err) {
-      setError(isUnreachable(err) ? 'אין חיבור לשרת. האמן לא נוסף.' : 'האמן לא נוסף. אפשר לנסות שוב.')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  return (
-    <form className={styles.form} onSubmit={submit} noValidate>
-      <div className={`${styles.field} ${styles.artistField}`}>
-        <label htmlFor="artist-name" className={styles.label}>
-          אמן או להקה
-        </label>
-        <input
-          id="artist-name"
-          className={styles.input}
-          placeholder="למשל: אביתר בנאי"
-          autoComplete="off"
-          enterKeyHint="done"
-          value={artist}
-          aria-invalid={error ? true : undefined}
-          aria-describedby={error ? 'artist-error' : undefined}
-          onChange={(e) => setArtist(e.target.value)}
-        />
-      </div>
-      <div className={`${styles.field} ${styles.venueField}`}>
-        <label htmlFor="artist-venue" className={styles.label}>
-          מקום
-        </label>
-        <select id="artist-venue" className={styles.select} value={venue} onChange={(e) => setVenue(e.target.value)}>
-          <option value="">כל המקומות</option>
-          {venues.map((v) => (
-            <option key={v.venue} value={v.venue}>
-              {v.venue}
-            </option>
-          ))}
-        </select>
-      </div>
-      <button type="submit" className={styles.primary} disabled={busy} aria-busy={busy || undefined}>
-        הוספה
-      </button>
-      {error && (
-        <p id="artist-error" className={styles.error} role="alert">
-          {error}
-        </p>
-      )}
-    </form>
   )
 }
 

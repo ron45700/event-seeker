@@ -1,0 +1,133 @@
+.form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'artist artist'
+    'venue submit'
+    'error error';
+  gap: 12px;
+  align-items: end;
+}
+
+.form[data-layout='card'] {
+  padding: 16px;
+  border-radius: var(--radius-card);
+  background: var(--surface);
+}
+
+@media (min-width: 600px) and (max-width: 1023px) {
+  .form[data-layout='card'] {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto;
+    grid-template-areas:
+      'artist venue submit'
+      'error error error';
+    align-items: start;
+  }
+
+  .form[data-layout='card'] .primary {
+    margin-top: 26px;
+  }
+}
+
+.form[data-layout='sheet'] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'artist'
+    'venue'
+    'error'
+    'submit';
+  gap: 16px;
+}
+
+.artistField {
+  grid-area: artist;
+}
+
+.venueField {
+  grid-area: venue;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.hint {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  text-wrap: pretty;
+}
+
+.input,
+.select {
+  width: 100%;
+  height: 48px;
+  padding-inline: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface-raised);
+  font-size: 1rem;
+}
+
+.input::placeholder {
+  color: var(--text-muted);
+}
+
+.input[aria-invalid='true'] {
+  border-color: var(--danger);
+}
+
+/* A drawn chevron in the text colour, so it follows the theme. */
+.selectWrap {
+  position: relative;
+  color: var(--text-muted);
+}
+
+.selectWrap::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  inset-inline-end: 18px;
+  width: 8px;
+  height: 8px;
+  border-bottom: 2px solid currentColor;
+  border-left: 2px solid currentColor;
+  transform: translateY(-70%) rotate(-45deg);
+  pointer-events: none;
+}
+
+.select {
+  appearance: none;
+  padding-inline-end: 40px;
+  color: var(--text);
+}
+
+.primary {
+  grid-area: submit;
+  height: 48px;
+  padding-inline: 24px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+
+.primary:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.error {
+  grid-area: error;
+  color: var(--danger);
+  font-size: 0.875rem;
+}

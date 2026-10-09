@@ -87,7 +87,7 @@ export function groupByMonth<T extends { starts_at: string }>(items: T[]): Month
   return groups
 }
 
-/** Hebrew count with the singular form: "הופעה אחת", "12 הופעות". */
-export function showCount(n: number): string {
-  return n === 1 ? 'הופעה אחת' : `${n} הופעות`
+/** Hebrew count with the singular form: "אירוע אחד", "12 אירועים". */
+export function eventCount(n: number): string {
+  return n === 1 ? 'אירוע אחד' : `${n} אירועים`
 }

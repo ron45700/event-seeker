@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { ApiError, isUnreachable } from '../lib/api'
-import { navigate, nextRoute } from '../lib/router'
+import { navigate, useRoute } from '../lib/router'
 import { useSession } from '../lib/session'
 import styles from './SignIn.module.css'
 
@@ -10,13 +10,14 @@ const EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/
 /** One email field. A new address is registered on the spot; there is no password. */
 export function SignIn() {
   const { me, signIn } = useSession()
+  const { next } = useRoute()
   const [email, setEmail] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (me) navigate(nextRoute())
-  }, [me])
+    if (me) navigate(next ?? '#/')
+  }, [me, next])
 
   async function submit(e: FormEvent) {
     e.preventDefault()

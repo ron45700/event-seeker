@@ -12,8 +12,8 @@ html {
 body {
   margin: 0;
   min-height: 100dvh;
-  background: var(--night);
-  color: var(--paper);
+  background: var(--bg);
+  color: var(--text);
   font-family: var(--font-ui);
   font-size: 1rem;
   line-height: 1.5;
@@ -58,7 +58,7 @@ img {
 }
 
 :focus-visible {
-  outline: 3px solid var(--sodium);
+  outline: 3px solid var(--accent-strong);
   outline-offset: 2px;
 }
 

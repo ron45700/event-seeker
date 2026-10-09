@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatPrice, groupByMonth, parseLocal, shortDate, showCount, timeOfDay, weekday } from './format'
+import { eventCount, formatPrice, groupByMonth, parseLocal, shortDate, timeOfDay, weekday } from './format'
 
 describe('parseLocal', () => {
   it('reads the wall-clock time without timezone conversion', () => {
@@ -49,9 +49,9 @@ describe('groupByMonth', () => {
   })
 })
 
-describe('showCount', () => {
+describe('eventCount', () => {
   it('uses the singular form for one', () => {
-    expect(showCount(1)).toBe('הופעה אחת')
-    expect(showCount(12)).toBe('12 הופעות')
+    expect(eventCount(1)).toBe('אירוע אחד')
+    expect(eventCount(12)).toBe('12 אירועים')
   })
 })

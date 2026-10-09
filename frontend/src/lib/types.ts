@@ -2,10 +2,18 @@
 
 export type EventKind = 'show' | 'festival'
 
+/** "available", "sold_out" or "unavailable"; null when the site exposes nothing. */
+export type Availability = 'available' | 'sold_out' | 'unavailable'
+
+export type Theme = 'dark' | 'light'
+
 export interface ShowEvent {
   id: number
   source: string
+  /** The shape of the event (one night or a festival), not its genre. */
   kind: EventKind
+  /** The genre, e.g. "music" or "standup". Kept as a string: unknown values may arrive. */
+  category: string
   title: string
   /** Guests for a show, the lineup for a festival. */
   artists: string[]
@@ -18,13 +26,17 @@ export interface ShowEvent {
   /** Shekels without a currency sign. */
   price: string | null
   image_url: string | null
-  /** The show matches one of the signed-in user's subscriptions. */
+  availability: Availability | null
+  /** Only where the site exposes counts (Barby). */
+  tickets_left: number | null
+  /** The event matches one of the signed-in user's subscriptions. */
   subscribed: boolean
 }
 
 export interface Me {
   email: string
   paused: boolean
+  theme: Theme
 }
 
 export interface Subscription {

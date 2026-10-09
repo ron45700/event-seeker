@@ -6,12 +6,20 @@
   padding: 0;
   border: 0;
   border-radius: 18px 18px 0 0;
-  background: var(--stage);
-  color: var(--paper);
+  background: var(--surface);
+  color: var(--text);
+}
+
+@media (min-width: 600px) {
+  .sheet {
+    max-width: 520px;
+    margin: auto;
+    border-radius: 18px;
+  }
 }
 
 .sheet::backdrop {
-  background: rgb(5 7 12 / 0.6);
+  background: var(--scrim);
 }
 
 .sheet[open] {
@@ -25,10 +33,17 @@
   padding: 8px var(--gutter) calc(16px + env(safe-area-inset-bottom, 0px));
 }
 
+@media (min-width: 600px) {
+  .panel {
+    padding: 12px 24px 24px;
+  }
+}
+
 .header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: 8px;
 }
 
 .heading {
@@ -37,9 +52,11 @@
   font-size: 2.25rem;
   line-height: 1;
   padding-top: 0.15em;
+  text-wrap: balance;
 }
 
 .close {
+  flex: none;
   display: grid;
   place-items: center;
   width: var(--tap);
@@ -47,15 +64,15 @@
   margin-inline-end: -10px;
   border: 0;
   background: transparent;
-  color: var(--fog);
+  color: var(--text-muted);
 }
 
 .done {
   min-height: 50px;
   border: 0;
   border-radius: var(--radius-control);
-  background: var(--sodium);
-  color: var(--sodium-ink);
+  background: var(--accent);
+  color: var(--accent-ink);
   font-weight: 600;
 }
 

@@ -26,7 +26,7 @@
 
 .description {
   font-size: 0.875rem;
-  color: var(--fog);
+  color: var(--text-muted);
 }
 
 .track {
@@ -37,7 +37,7 @@
   height: 28px;
   padding: 3px;
   border-radius: 999px;
-  background: var(--rail);
+  background: var(--track-off);
   transition: background-color 160ms ease-out;
 }
 
@@ -45,16 +45,17 @@
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: var(--paper);
+  background: var(--thumb);
+  box-shadow: var(--thumb-shadow);
   transition: transform 160ms ease-out;
 }
 
 .toggle[aria-checked='true'] .track {
-  background: var(--sodium);
+  background: var(--accent);
 }
 
 /* The app is right-to-left: "on" moves the thumb toward the inline end, which is left. */
 .toggle[aria-checked='true'] .thumb {
   transform: translateX(-20px);
-  background: var(--sodium-ink);
+  background: var(--accent-ink);
 }

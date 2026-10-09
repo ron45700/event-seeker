@@ -2,9 +2,10 @@
   position: sticky;
   top: var(--stick-top);
   z-index: 20;
-  background: var(--night);
+  background: var(--bg);
 }
 
+/* Phone: search and the sheet button on one row. */
 .inner {
   display: flex;
   align-items: center;
@@ -12,17 +13,23 @@
   padding: 8px var(--gutter);
 }
 
+/* Tablet and up: the search centred on its own row, chips and toggles below. */
 @media (min-width: 600px) {
   .inner {
-    flex-wrap: wrap;
-    gap: 8px 20px;
-    padding-block: 12px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'search search'
+      'venues toggles';
+    gap: 10px 24px;
+    padding-block: 12px 10px;
   }
 }
 
 /* Search */
 
 .search {
+  grid-area: search;
   position: relative;
   flex: 1;
   min-width: 0;
@@ -32,7 +39,8 @@
 
 @media (min-width: 600px) {
   .search {
-    flex: 0 1 340px;
+    justify-self: center;
+    width: min(520px, 100%);
   }
 }
 
@@ -41,7 +49,7 @@
   inset-inline-start: 12px;
   width: 20px;
   height: 20px;
-  color: var(--fog);
+  color: var(--text-muted);
   pointer-events: none;
 }
 
@@ -49,16 +57,16 @@
   width: 100%;
   height: 46px;
   padding-inline: 42px 44px;
-  border: 1px solid var(--rail);
+  border: 1px solid var(--line);
   border-radius: var(--radius-control);
-  background: var(--stage-raised);
+  background: var(--surface-raised);
   /* 16px or more keeps iOS from zooming in on focus. */
   font-size: 1rem;
   appearance: none;
 }
 
 .input::placeholder {
-  color: var(--fog);
+  color: var(--text-muted);
 }
 
 .input::-webkit-search-cancel-button {
@@ -78,7 +86,7 @@
   height: var(--tap);
   border: 0;
   background: transparent;
-  color: var(--fog);
+  color: var(--text-muted);
 }
 
 /* Phone: one button opens the sheet */
@@ -89,9 +97,9 @@
   gap: 6px;
   height: 46px;
   padding-inline: 12px 14px;
-  border: 1px solid var(--rail);
+  border: 1px solid var(--line);
   border-radius: var(--radius-control);
-  background: var(--stage-raised);
+  background: var(--surface-raised);
   font-weight: 500;
 }
 
@@ -102,13 +110,14 @@
   height: 20px;
   padding-inline: 5px;
   border-radius: 999px;
-  background: var(--sodium);
-  color: var(--sodium-ink);
+  background: var(--accent);
+  color: var(--accent-ink);
   font-size: 0.75rem;
   font-weight: 600;
 }
 
-.inline {
+.venues,
+.toggles {
   display: none;
 }
 
@@ -117,61 +126,70 @@
     display: none;
   }
 
-  .inline {
-    display: contents;
+  .venues {
+    grid-area: venues;
+    display: block;
+    min-width: 0;
+  }
+
+  .toggles {
+    grid-area: toggles;
+    display: flex;
+    align-items: center;
+    gap: 20px;
   }
 }
 
-/* Controls, shared by the inline bar and the sheet */
-
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px 20px;
-}
-
-.controls[data-stacked] {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 24px;
-}
-
-.group {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.groupLabel {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--fog);
-}
-
+/* Venue chips: a single row that scrolls sideways and never wraps. The fade marks an edge
+   with more chips beyond it (start is the right side, end the left). */
 .chips {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 8px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  /* Room for the focus ring inside the scroll box. */
+  padding: 3px;
+  margin: -3px;
+}
+
+.chips::-webkit-scrollbar {
+  display: none;
+}
+
+.chips[data-fade-end] {
+  mask-image: linear-gradient(to right, transparent, #000 36px);
+}
+
+.chips[data-fade-start] {
+  mask-image: linear-gradient(to left, transparent, #000 36px);
+}
+
+.chips[data-fade-start][data-fade-end] {
+  mask-image: linear-gradient(to right, transparent, #000 36px, #000 calc(100% - 36px), transparent);
 }
 
 .chip {
+  flex: none;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   min-height: var(--tap);
   padding-inline: 14px;
-  border: 1px solid var(--rail);
+  border: 1px solid var(--line);
   border-radius: 999px;
   background: transparent;
   font-weight: 500;
   white-space: nowrap;
+  scroll-snap-align: start;
 }
 
 .chip[aria-pressed='true'] {
-  border-color: var(--paper);
-  background: var(--paper);
-  color: var(--night);
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--bg);
 }
 
 .chip[data-venue][aria-pressed='true'] {
@@ -191,10 +209,27 @@
   background: var(--venue-ink);
 }
 
-.mine {
+/* Sheet */
+
+.sheetGroup {
   display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
 }
 
-.controls[data-stacked] .mine > * {
-  flex: 1;
+.groupLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.sheetToggles {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sheetToggles > * {
+  width: 100%;
 }

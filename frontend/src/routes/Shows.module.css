@@ -21,7 +21,7 @@
   gap: 10px;
   margin-inline: calc(-1 * var(--gutter));
   padding: 10px var(--gutter) 6px;
-  background: var(--night);
+  background: var(--bg);
 }
 
 .monthName {
@@ -42,11 +42,11 @@
   font-family: var(--font-display);
   font-size: 1.75rem;
   line-height: 1;
-  color: var(--fog);
+  color: var(--text-muted);
 }
 
 .monthCount {
   margin-inline-start: auto;
   font-size: 0.875rem;
-  color: var(--fog);
+  color: var(--text-muted);
 }

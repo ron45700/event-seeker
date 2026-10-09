@@ -37,7 +37,7 @@ exists when the server starts.
 cd frontend
 npm install
 npm run dev      # http://localhost:5173, /api proxied to http://localhost:8765
-npm test         # unit tests for formatting, search and venue colours
+npm test         # unit tests, including WCAG contrast of both themes (read from tokens.css)
 npm run build    # type-check, then write the static build to ../web
 ```
 

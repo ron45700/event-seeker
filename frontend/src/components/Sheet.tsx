@@ -1,16 +1,19 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react'
 import { CloseIcon } from './icons'
-import styles from './FilterSheet.module.css'
+import styles from './Sheet.module.css'
 
 interface Props {
   open: boolean
   onClose: () => void
-  doneLabel: string
+  title: ReactNode
   children: ReactNode
 }
 
-/** A bottom sheet on a native modal <dialog>: focus trap, Escape and backdrop close for free. */
-export function FilterSheet({ open, onClose, doneLabel, children }: Props) {
+/**
+ * A modal on a native <dialog>, so focus trap, Escape and the backdrop come for free.
+ * A bottom sheet on a phone, a centred panel from tablet width up.
+ */
+export function Sheet({ open, onClose, title, children }: Props) {
   const ref = useRef<HTMLDialogElement>(null)
   const headingId = useId()
 
@@ -35,17 +38,23 @@ export function FilterSheet({ open, onClose, doneLabel, children }: Props) {
       <div className={styles.panel}>
         <div className={styles.header}>
           <h2 id={headingId} className={styles.heading}>
-            סינון
+            {title}
           </h2>
           <button type="button" className={styles.close} aria-label="סגירה" onClick={onClose}>
             <CloseIcon />
           </button>
         </div>
         {children}
-        <button type="button" className={styles.done} onClick={onClose}>
-          {doneLabel}
-        </button>
       </div>
     </dialog>
+  )
+}
+
+/** The full-width primary button at the bottom of a sheet. */
+export function SheetButton({ children, onClick }: { children: ReactNode; onClick: () => void }) {
+  return (
+    <button type="button" className={styles.done} onClick={onClick}>
+      {children}
+    </button>
   )
 }

@@ -63,8 +63,9 @@ export const api = {
 
   logout: () => request<{ ok: boolean }>('/api/logout', { method: 'POST' }),
 
-  setPaused: (paused: boolean) =>
-    request<Me>('/api/me', { method: 'PATCH', body: jsonBody({ paused }) }),
+  /** Changes only the fields sent. */
+  updateMe: (changes: Partial<Pick<Me, 'paused' | 'theme'>>) =>
+    request<Me>('/api/me', { method: 'PATCH', body: jsonBody(changes) }),
 
   subscriptions: () => request<Subscription[]>('/api/subscriptions'),
 

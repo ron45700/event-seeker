@@ -1,17 +1,25 @@
-/* Design tokens. Dark only: the site sits next to Jellyfin and Seerr in a Homarr dashboard. */
+/* Design tokens. Two themes on <html data-theme>: dark (the default, the Homarr family next
+   to Jellyfin and Seerr) and light. The values are checked for WCAG AA contrast in
+   src/lib/contrast.test.ts, which reads this file. */
 :root {
   color-scheme: dark;
 
-  /* Palette */
-  --night: #10131c; /* page */
-  --stage: #1a1f2d; /* cards, sheets */
-  --stage-raised: #232a3b; /* inputs, chips */
-  --rail: #2c3345; /* lines, perforation */
-  --paper: #ede9e0; /* main text, ticket stub */
-  --fog: #9aa3b5; /* secondary text */
-  --sodium: #f4b740; /* followed shows, primary actions */
-  --sodium-ink: #2b1d02;
-  --alarm: #ff9a8f;
+  /* Palette: dark */
+  --bg: #10131c; /* page */
+  --surface: #1a1f2d; /* cards, sheets */
+  --surface-raised: #232a3b; /* inputs, chips */
+  --line: #2c3345; /* borders, perforation */
+  --text: #ede9e0; /* main text; also the paper date stub */
+  --text-muted: #9aa3b5; /* secondary text */
+  --accent: #f4b740; /* fill: followed shows, primary actions */
+  --accent-ink: #2b1d02; /* text on --accent */
+  --accent-strong: #f4b740; /* lines and text in the accent colour, on --bg / --surface */
+  --danger: #ff9a8f;
+  --scrim: rgb(5 7 12 / 0.6);
+  --overlay: rgb(16 19 28 / 0.94); /* explanation panel over a poster */
+  --thumb: #ede9e0; /* switch thumb when off */
+  --thumb-shadow: none;
+  --track-off: #636c82; /* switch track when off: 3:1 against --bg and --surface */
 
   /* Type */
   --font-display: 'Karantina', 'IBM Plex Sans Hebrew', system-ui, sans-serif;
@@ -29,6 +37,45 @@
   /* Sticky offsets. --topbar-h and --filterbar-h are measured at runtime. */
   --stick-top: 0px;
   --tabbar-space: calc(64px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Light is its own palette, not an inversion: a cool grey page with white cards, a darker
+   amber for lines and text (the bright amber stays as a fill under dark ink), and the
+   date stub flips to a dark ink tab because --text is dark here. */
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --bg: #eef0f4;
+  --surface: #ffffff;
+  --surface-raised: #e5e8ee;
+  --line: #c9cfd9;
+  --text: #161a24;
+  --text-muted: #4d5667;
+  --accent: #f2b233;
+  --accent-ink: #2b1d02;
+  --accent-strong: #8a5a00;
+  --danger: #b3261e;
+  --scrim: rgb(22 26 36 / 0.45);
+  --overlay: rgb(255 255 255 / 0.95);
+  --thumb: #ffffff;
+  --thumb-shadow: 0 1px 3px rgb(22 26 36 / 0.35);
+  --track-off: #7b8596;
+}
+
+/* Venue colours. An element carrying data-venue sets --venue-hue (see venueColor.ts);
+   each theme turns that one hue into a badge fill, ink on the badge, and poster tints. */
+[data-venue] {
+  --venue: oklch(0.76 0.13 var(--venue-hue));
+  --venue-ink: oklch(0.22 0.05 var(--venue-hue));
+  --venue-deep: oklch(0.3 0.07 var(--venue-hue));
+  --venue-glow: oklch(0.86 0.09 var(--venue-hue));
+  --venue-line: oklch(0.76 0.13 var(--venue-hue));
+}
+
+:root[data-theme='light'] [data-venue] {
+  --venue-deep: oklch(0.9 0.05 var(--venue-hue));
+  --venue-glow: oklch(0.4 0.11 var(--venue-hue));
+  --venue-line: oklch(0.58 0.12 var(--venue-hue));
 }
 
 @media (min-width: 600px) {

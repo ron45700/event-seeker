@@ -32,7 +32,7 @@
 }
 
 .body {
-  color: var(--fog);
+  color: var(--text-muted);
   text-wrap: pretty;
 }
 
@@ -45,8 +45,8 @@
   padding-inline: 20px;
   border: 0;
   border-radius: var(--radius-control);
-  background: var(--sodium);
-  color: var(--sodium-ink);
+  background: var(--accent);
+  color: var(--accent-ink);
   font-weight: 600;
   text-decoration: none;
 }

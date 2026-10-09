@@ -27,7 +27,7 @@
 
 .lead {
   margin: 8px 0 28px;
-  color: var(--fog);
+  color: var(--text-muted);
   text-wrap: pretty;
 }
 
@@ -35,30 +35,30 @@
   margin-bottom: 6px;
   font-size: 0.875rem;
   font-weight: 500;
-  color: var(--fog);
+  color: var(--text-muted);
 }
 
 .input {
   height: 52px;
   padding-inline: 14px;
-  border: 1px solid var(--rail);
+  border: 1px solid var(--line);
   border-radius: var(--radius-control);
-  background: var(--stage-raised);
+  background: var(--surface-raised);
   font-size: 1.0625rem;
   text-align: left;
 }
 
 .input::placeholder {
-  color: var(--fog);
+  color: var(--text-muted);
 }
 
 .input[aria-invalid='true'] {
-  border-color: var(--alarm);
+  border-color: var(--danger);
 }
 
 .error {
   margin-top: 8px;
-  color: var(--alarm);
+  color: var(--danger);
   font-size: 0.875rem;
 }
 
@@ -67,8 +67,8 @@
   margin-top: 16px;
   border: 0;
   border-radius: var(--radius-control);
-  background: var(--sodium);
-  color: var(--sodium-ink);
+  background: var(--accent);
+  color: var(--accent-ink);
   font-weight: 600;
   font-size: 1.0625rem;
 }
