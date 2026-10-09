@@ -45,6 +45,9 @@ npm run build    # type-check, then write the static build to ../web
 Venue badge colours come from the venue name; fixed hues for known venues are in
 `frontend/src/lib/venueColor.ts`. Card image URLs are built in `frontend/src/lib/images.ts`.
 
+Cards load images through `/api/events/{id}/thumbnail`, which downsizes the venue image to a
+WebP once and caches it in `data/thumbs/` (safe to delete; `THUMB_WIDTH` sets the size).
+
 ## Layout
 
 | File | Role |

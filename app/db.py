@@ -193,6 +193,11 @@ def upcoming_events(conn: sqlite3.Connection) -> list[tuple[int, Event]]:
     return [(row["id"], row_to_event(row)) for row in rows]
 
 
+def event_image_url(conn: sqlite3.Connection, event_id: int) -> str | None:
+    row = conn.execute("SELECT image_url FROM events WHERE id = ?", (event_id,)).fetchone()
+    return row["image_url"] if row else None
+
+
 def source_status(conn: sqlite3.Connection) -> list[sqlite3.Row]:
     return conn.execute(
         "SELECT source, first_synced_at, last_synced_at FROM source_state ORDER BY source"

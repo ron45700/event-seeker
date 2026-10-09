@@ -8,10 +8,11 @@ import threading
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from app import config, db
+from app import config, db, thumbs
 from app.matching import contains_term, matches
 from app.notifier import get_notifier
 from app.pipeline import run_once
@@ -174,6 +175,22 @@ def list_events(
             "subscribed": subscribed,
         })
     return result
+
+
+@app.get("/api/events/{event_id}/thumbnail")
+def event_thumbnail(event_id: int, conn=Depends(get_conn)):
+    """A small WebP version of the event image, cached on disk.
+
+    Only images of stored events are fetched, so this is not an open proxy.
+    If the thumbnail cannot be built, redirects to the original image.
+    """
+    image_url = db.event_image_url(conn, event_id)
+    if not image_url:
+        raise HTTPException(404, "event has no image")
+    path = thumbs.get_thumbnail(image_url)
+    if path is None:
+        return RedirectResponse(image_url)
+    return FileResponse(path, media_type="image/webp", headers={"Cache-Control": "public, max-age=86400"})
 
 
 @app.get("/api/venues")

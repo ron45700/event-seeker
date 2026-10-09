@@ -24,6 +24,8 @@ if not DB_PATH.is_absolute():
 FETCH_INTERVAL_MINUTES = int(os.environ.get("FETCH_INTERVAL_MINUTES", "60"))
 HOST = os.environ.get("HOST", "0.0.0.0")
 PORT = int(os.environ.get("PORT", "8765"))
+THUMB_DIR = DB_PATH.parent / "thumbs"  # cached card thumbnails, safe to delete
+THUMB_WIDTH = int(os.environ.get("THUMB_WIDTH", "480"))  # px; cards are about 240 CSS px at 2x
 WEB_DIR = ROOT / "web"  # built UI files, served at / when the folder exists
 
 SMTP_HOST = os.environ.get("SMTP_HOST", "smtp.gmail.com")

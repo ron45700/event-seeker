@@ -5,6 +5,7 @@ __pycache__/
 .pytest_cache/
 data/*.db
 data/*.db-*
+data/thumbs/
 
 # Frontend build output and dependencies
 web/
