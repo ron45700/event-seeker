@@ -9,7 +9,7 @@ Setup: the server is running (`python -m app.main serve`) and the site opens at
 ## 1. Sources
 
 - [ ] Run `python -m app.main run-once`. Expect one line per source (`barby`, `reading3`,
-      `zappa`), each with an event count above zero and no traceback.
+      `zappa`, `kupat`, `comy`), each with an event count above zero and no traceback.
 - [ ] Open `http://localhost:8765/health`. Every source has a recent `last_synced_at`.
 - [ ] Pick one show from each venue on the site and compare it with the venue's own site:
       title, date, time, and that the card opens the right page.

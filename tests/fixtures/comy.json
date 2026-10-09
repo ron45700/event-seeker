@@ -1,0 +1,103 @@
+{
+ "success": true,
+ "data": {
+  "events": [
+   {
+    "artistName": "אסי כהן - שאולי",
+    "showName": "קומדיה",
+    "link": "https://tickets.comy.co.il/booking/features/830?prsntId=53713",
+    "photo": "https://cdn.comy.co.il/wp-content/uploads/2026/05/30150155/cover_asi_cohen_cred_ohad_romano.gif",
+    "timestamp": 1792098000,
+    "placeName": "היכל התרבות עפולה",
+    "benefits": false,
+    "soldOut": false,
+    "almostSoldOut": false,
+    "postponed": false
+   },
+   {
+    "artistName": "אסי כהן - שאולי",
+    "showName": "קומדיה",
+    "link": "https://tickets.comy.co.il/booking/features/830?prsntId=53714",
+    "photo": "https://cdn.comy.co.il/wp-content/uploads/2026/05/30150155/cover_asi_cohen_cred_ohad_romano.gif",
+    "timestamp": 1792270800,
+    "placeName": "צוותא תל אביב",
+    "benefits": false,
+    "soldOut": false,
+    "almostSoldOut": false,
+    "postponed": false
+   },
+   {
+    "artistName": "שיחות עם הברמן",
+    "showName": "",
+    "link": "https://tickets.comy.co.il/booking/features/2296?prsntId=56102",
+    "photo": "https://cdn.comy.co.il/wp-content/uploads/2024/12/15174314/IMG_1508.jpg",
+    "timestamp": 1791666000,
+    "placeName": "Babu bar - תל אביב- פתיחת דלתות 20:00",
+    "benefits": false,
+    "soldOut": true,
+    "almostSoldOut": false,
+    "postponed": false
+   },
+   {
+    "artistName": "שיחות עם הברמן",
+    "showName": "",
+    "link": "https://tickets.comy.co.il/booking/features/2296?prsntId=56103",
+    "photo": "https://cdn.comy.co.il/wp-content/uploads/2024/12/15174314/IMG_1508.jpg",
+    "timestamp": 1792098000,
+    "placeName": "Babu bar - תל אביב- פתיחת דלתות 20:00",
+    "benefits": false,
+    "soldOut": false,
+    "almostSoldOut": true,
+    "postponed": false
+   },
+   {
+    "artistName": "אדיר מילר",
+    "showName": "סטנדאפ",
+    "link": "https://comy.co.il/event/adir-miller/",
+    "photo": "https://cdn.comy.co.il/wp-content/uploads/2026/06/11105227/Adir-Miller_350.jpg",
+    "timestamp": 1791923400,
+    "placeName": "היכל התרבות כרמיאל",
+    "benefits": false,
+    "soldOut": true,
+    "almostSoldOut": false,
+    "postponed": false
+   },
+   {
+    "artistName": "אורי חזקיה",
+    "showName": "סטנדאפ",
+    "link": "https://tickets.comy.co.il/booking/features/827?prsntId=55371",
+    "photo": "https://cdn.comy.co.il/wp-content/uploads/2024/08/29170541/%D7%A7%D7%95%D7%91%D7%99%D7%94-350.jpg",
+    "timestamp": 1791667800,
+    "placeName": "בית ציוני אמריקה-תל אביב",
+    "benefits": false,
+    "soldOut": false,
+    "almostSoldOut": false,
+    "postponed": false
+   },
+   {
+    "artistName": "אורי חזקיה",
+    "showName": "סטנדאפ",
+    "link": "https://tickets.comy.co.il/booking/features/827?prsntId=55371",
+    "photo": "https://cdn.comy.co.il/wp-content/uploads/2024/08/29170541/%D7%A7%D7%95%D7%91%D7%99%D7%94-350.jpg",
+    "timestamp": 1791667800,
+    "placeName": "בית ציוני אמריקה-תל אביב",
+    "benefits": false,
+    "soldOut": false,
+    "almostSoldOut": false,
+    "postponed": false
+   },
+   {
+    "artistName": "אורי חזקיה",
+    "showName": "סטנדאפ",
+    "link": "https://tickets.comy.co.il/booking/features/827?prsntId=55371https://tickets.comy.co.il/booking/features/827?prsntId=55373",
+    "photo": "https://cdn.comy.co.il/wp-content/uploads/2024/08/29170541/%D7%A7%D7%95%D7%91%D7%99%D7%94-350.jpg",
+    "timestamp": 1794519000,
+    "placeName": "תמוז בית ליצירה מוזיקלית- ב\"ש",
+    "benefits": false,
+    "soldOut": false,
+    "almostSoldOut": false,
+    "postponed": false
+   }
+  ]
+ }
+}

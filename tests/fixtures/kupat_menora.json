@@ -1,0 +1,153 @@
+{
+ "data": [
+  {
+   "attributes": {
+    "Name": "היכל מנורה מבטחים",
+    "Events": {
+     "data": [
+      {
+       "attributes": {
+        "Event_ID": 55632,
+        "Date_Time": "2026-10-29 20:45:00",
+        "Feature_Name": "איתי לוי",
+        "Feature_Category_Name": "מיינסטרים",
+        "Location_Name": "היכל מנורה מבטחים",
+        "Venue_City": "תל אביב",
+        "Soldout": false,
+        "Private": false,
+        "Min_Price": 199,
+        "Max_Price": 399,
+        "Show": {
+         "data": {
+          "attributes": {
+           "Name": "איתי לוי",
+           "Slug": "itay_levi",
+           "Show_Image_Url": "https://media.kupat.co.il/afc85b20d1297bd9d3598fc443b9bcbcce59ff855e92a462af4e6c309f9468de.jpg",
+           "Artists": {
+            "data": [
+             {
+              "attributes": {
+               "Name": "איתי לוי",
+               "Slug": "itay_levi"
+              }
+             }
+            ]
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "attributes": {
+        "Event_ID": 56000,
+        "Date_Time": "2026-11-12 20:45:00",
+        "Feature_Name": "מור",
+        "Feature_Category_Name": "מיינסטרים,מוסיקה מזרחית",
+        "Location_Name": "היכל מנורה מבטחים",
+        "Venue_City": "תל אביב",
+        "Soldout": true,
+        "Private": false,
+        "Min_Price": 179,
+        "Max_Price": 299,
+        "Show": {
+         "data": {
+          "attributes": {
+           "Name": "מור",
+           "Slug": "mor",
+           "Show_Image_Url": "https://media.kupat.co.il/cf1b9f0aba34a3ed9aa73499a38a52f2820a0f438f15b89fff9b2b7499a51598.avif",
+           "Artists": {
+            "data": [
+             {
+              "attributes": {
+               "Name": "מור רביעי",
+               "Slug": "mor_reveii"
+              }
+             }
+            ]
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "attributes": {
+        "Event_ID": 55986,
+        "Date_Time": "2026-11-29 21:15:00",
+        "Feature_Name": "היסטריה",
+        "Feature_Category_Name": "מיינסטרים,מוסיקה מזרחית",
+        "Location_Name": "היכל מנורה מבטחים",
+        "Venue_City": "תל אביב",
+        "Soldout": true,
+        "Private": false,
+        "Min_Price": 199,
+        "Max_Price": 449,
+        "Show": {
+         "data": {
+          "attributes": {
+           "Name": "היסטריה",
+           "Slug": "histeria",
+           "Show_Image_Url": "https://media.kupat.co.il/77bdb3218720295a74741444dbdf0082210fc791f3d0e0a5175a898ef123c880.jpg",
+           "Artists": {
+            "data": [
+             {
+              "attributes": {
+               "Name": "היסטריה  ",
+               "Slug": "hysteria"
+              }
+             }
+            ]
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "attributes": {
+        "Event_ID": 56087,
+        "Date_Time": "2026-12-13 21:15:00",
+        "Feature_Name": "היסטריה",
+        "Feature_Category_Name": "מיינסטרים,מוסיקה מזרחית",
+        "Location_Name": "היכל מנורה מבטחים",
+        "Venue_City": "תל אביב",
+        "Soldout": false,
+        "Private": false,
+        "Min_Price": 199,
+        "Max_Price": 449,
+        "Show": {
+         "data": {
+          "attributes": {
+           "Name": "היסטריה",
+           "Slug": "histeria",
+           "Show_Image_Url": "https://media.kupat.co.il/77bdb3218720295a74741444dbdf0082210fc791f3d0e0a5175a898ef123c880.jpg",
+           "Artists": {
+            "data": [
+             {
+              "attributes": {
+               "Name": "היסטריה  ",
+               "Slug": "hysteria"
+              }
+             }
+            ]
+           }
+          }
+         }
+        }
+       }
+      }
+     ]
+    }
+   }
+  }
+ ],
+ "meta": {
+  "pagination": {
+   "page": 1,
+   "pageSize": 25,
+   "pageCount": 1,
+   "total": 1
+  }
+ }
+}

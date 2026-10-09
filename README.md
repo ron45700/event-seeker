@@ -51,7 +51,7 @@ events at all is a failure (a site that changed its markup usually parses to not
 |---|---|
 | `/health` | 200 while the server and database work. `status` is `ok` or `degraded`, with the details of every source |
 | `/health/sources` | 200, or 503 when any source is unhealthy |
-| `/health/sources/{name}` | The same for one source (`barby`, `reading3`, `zappa`) |
+| `/health/sources/{name}` | The same for one source (`barby`, `reading3`, `zappa`, `kupat`, `comy`) |
 
 A source is unhealthy after `SOURCE_ALERT_AFTER_FAILURES` failed runs in a row (default 3), or
 when it was not attempted for more than two fetch intervals (the background run stopped).
@@ -105,6 +105,8 @@ WebP once and caches it in `data/thumbs/` (safe to delete; `THUMB_WIDTH` sets th
 | `barby` | Barby | JSON API | sold out + tickets left |
 | `reading3` | Reading 3 | HTML listing page | not exposed |
 | `zappa` | Zappa Amphi Shuni, Tel Aviv, Herzliya | HTML venue pages with JSON-LD, paginated | available / not available |
+| `kupat` | Menora Mivtachim Arena, Amphi Tel Aviv (Kupat Tel Aviv) | JSON API, one request per venue | sold out / available |
+| `comy` | Stand-up shows nationwide (Comy) | JSON search call, one request | sold out / available |
 
 ## Adding a source
 

@@ -52,6 +52,16 @@ class Source(ABC):
         return response
 
     @classmethod
+    def post_json(cls, url: str, data: dict, headers: dict | None = None):
+        """POST a form and return the JSON reply (for sites whose listing is a search call)."""
+        response = httpx.post(
+            url, data=data, headers={**DEFAULT_HEADERS, **(headers or {})}, timeout=60,
+            follow_redirects=True,
+        )
+        response.raise_for_status()
+        return response.json()
+
+    @classmethod
     def get_json(cls, url: str, headers: dict | None = None):
         return cls._get(url, headers).json()
 

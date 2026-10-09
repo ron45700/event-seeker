@@ -1,0 +1,153 @@
+{
+ "data": [
+  {
+   "attributes": {
+    "Name": "אמפי תל אביב",
+    "Events": {
+     "data": [
+      {
+       "attributes": {
+        "Event_ID": 54961,
+        "Date_Time": "2026-10-15 20:45:00",
+        "Feature_Name": "אביב גפן",
+        "Feature_Category_Name": "רוק ישראלי",
+        "Location_Name": "אמפי תל אביב",
+        "Venue_City": "תל אביב",
+        "Soldout": false,
+        "Private": false,
+        "Min_Price": 229,
+        "Max_Price": 229,
+        "Show": {
+         "data": {
+          "attributes": {
+           "Name": "אביב גפן",
+           "Slug": "aviv_geffen",
+           "Show_Image_Url": "https://media.kupat.co.il/f036006caea3247189bce639429f03982b0a2c3aa9be135d43ab3b4a5c088de1.jpg",
+           "Artists": {
+            "data": [
+             {
+              "attributes": {
+               "Name": "אביב גפן",
+               "Slug": "aviv_geffen"
+              }
+             }
+            ]
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "attributes": {
+        "Event_ID": 56080,
+        "Date_Time": "2026-10-30 14:30:00",
+        "Feature_Name": "AZEALIA BANKS",
+        "Feature_Category_Name": "מיינסטרים",
+        "Location_Name": "אמפי תל אביב",
+        "Venue_City": "תל אביב",
+        "Soldout": false,
+        "Private": false,
+        "Min_Price": 229,
+        "Max_Price": 229,
+        "Show": {
+         "data": {
+          "attributes": {
+           "Name": "AZEALIA BANKS",
+           "Slug": "azealia_banks",
+           "Show_Image_Url": "https://media.kupat.co.il/ea9dcedf9a96b796a3304c3117a908f2b03bdef30867e8f8388a2d5e4d1de1a6.jpg",
+           "Artists": {
+            "data": [
+             {
+              "attributes": {
+               "Name": "אזיליה  בנקס",
+               "Slug": "azealia_banks"
+              }
+             }
+            ]
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "attributes": {
+        "Event_ID": 56216,
+        "Date_Time": "2026-10-16 13:00:00",
+        "Feature_Name": "מלך הקסטות",
+        "Feature_Category_Name": "מוסיקה מזרחית",
+        "Location_Name": "אמפי תל אביב",
+        "Venue_City": "תל אביב",
+        "Soldout": false,
+        "Private": false,
+        "Min_Price": 229,
+        "Max_Price": 299,
+        "Show": {
+         "data": {
+          "attributes": {
+           "Name": "מלך הקסטות",
+           "Slug": "the_king_of_castes",
+           "Show_Image_Url": "https://media.kupat.co.il/3fcfef9afa28f636abf0488295ae7db737e4c66491de068561d335e0dd412328.jpg",
+           "Artists": {
+            "data": [
+             {
+              "attributes": {
+               "Name": "מלך הקסטות",
+               "Slug": "king_cassettes"
+              }
+             }
+            ]
+           }
+          }
+         }
+        }
+       }
+      },
+      {
+       "attributes": {
+        "Event_ID": 56300,
+        "Date_Time": "2026-10-26 18:30:00",
+        "Feature_Name": "פסטיבל הנוסטלגיה של ישראל - NOSTALGIA FE",
+        "Feature_Category_Name": "מיינסטרים",
+        "Location_Name": "אמפי תל אביב",
+        "Venue_City": "תל אביב",
+        "Soldout": false,
+        "Private": false,
+        "Min_Price": 290,
+        "Max_Price": 290,
+        "Show": {
+         "data": {
+          "attributes": {
+           "Name": "פסטיבל הנוסטלגיה של ישראל - NOSTALGIA FE",
+           "Slug": "nostalgiafest",
+           "Show_Image_Url": "https://media.kupat.co.il/e717b5a520f84a5a2338ad0c123ab867b6e5ffbdf26e8b349051f3bb540d7c68.jpg",
+           "Artists": {
+            "data": [
+             {
+              "attributes": {
+               "Name": "NOSTALGIAFEST ",
+               "Slug": "nostalgiafest"
+              }
+             }
+            ]
+           }
+          }
+         }
+        }
+       }
+      }
+     ]
+    }
+   }
+  }
+ ],
+ "meta": {
+  "pagination": {
+   "page": 1,
+   "pageSize": 25,
+   "pageCount": 1,
+   "total": 1
+  }
+ }
+}
