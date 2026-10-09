@@ -12,6 +12,10 @@ from app.sources.base import Source
 
 log = logging.getLogger(__name__)
 
+# Zappa lists stand-up next to concerts with no category marker, so it is spotted by keyword.
+# Lectures and podcasts are not detected and stay under "music".
+_STANDUP = re.compile(r"סטנד[\s-]?אפ|stand[\s-]?up", re.IGNORECASE)
+
 BASE_URL = "https://www.zappa-club.co.il"
 
 # (display name, city, listing page). Zappa has more venues; only these are tracked.
@@ -128,6 +132,7 @@ class ZappaSource(Source):
             city=record["city"],
             url=url,
             artists=artists,
+            category="standup" if _STANDUP.search(" ".join(lines)) else "music",
             image_url=image,
             # the site only says available / not available; "not available" is not
             # necessarily sold out (sales may simply have closed)

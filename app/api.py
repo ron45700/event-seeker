@@ -6,6 +6,7 @@ import logging
 import re
 import threading
 from contextlib import asynccontextmanager
+from typing import Literal
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.responses import FileResponse, RedirectResponse
@@ -73,11 +74,12 @@ class SubscriptionBody(BaseModel):
 
 
 class MeBody(BaseModel):
-    paused: bool
+    paused: bool | None = None
+    theme: Literal["dark", "light"] | None = None
 
 
 def _me(user) -> dict:
-    return {"email": user["email"], "paused": bool(user["paused"])}
+    return {"email": user["email"], "paused": bool(user["paused"]), "theme": user["theme"]}
 
 
 @app.post("/api/login")
@@ -104,8 +106,14 @@ def me(user=Depends(current_user)):
 
 @app.patch("/api/me")
 def update_me(body: MeBody, user=Depends(current_user), conn=Depends(get_conn)):
-    """paused=true pauses alerts for this user only."""
-    db.set_paused(conn, user["id"], body.paused)
+    """Update the user's settings; only the fields sent are changed.
+
+    paused=true pauses alerts for this user only. theme is the UI theme, "dark" or "light".
+    """
+    if body.paused is not None:
+        db.set_paused(conn, user["id"], body.paused)
+    if body.theme is not None:
+        db.set_theme(conn, user["id"], body.theme)
     return _me(db.get_user(conn, user["email"]))
 
 
@@ -139,12 +147,14 @@ def list_events(
     request: Request,
     q: str = "",
     venue: str = "",
+    category: str = "",
     mine: bool = False,
     conn=Depends(get_conn),
 ):
     """Upcoming events ordered by date.
 
     q: free-text search in title and guests. venue: filter by venue or city.
+    category: "music" or "standup"; empty = all categories.
     mine: only events matching the logged-in user's subscriptions.
     Each event carries `subscribed`: whether it matches one of that user's subscriptions.
     """
@@ -153,6 +163,8 @@ def list_events(
     result = []
     for event_id, event in db.upcoming_events(conn):
         if q.strip() and not matches(event, q):
+            continue
+        if category.strip() and event.category != category.strip():
             continue
         if venue.strip() and not contains_term(f"{event.venue} {event.city}", venue):
             continue
@@ -163,6 +175,7 @@ def list_events(
             "id": event_id,
             "source": event.source,
             "kind": event.kind,
+            "category": event.category,
             "title": event.title,
             "artists": event.artists,
             "starts_at": event.starts_at.isoformat(),

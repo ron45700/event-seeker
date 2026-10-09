@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS events (
     source      TEXT NOT NULL,
     external_id TEXT NOT NULL,
     kind        TEXT NOT NULL,
+    category    TEXT NOT NULL DEFAULT 'music',
     title       TEXT NOT NULL,
     artists     TEXT NOT NULL,           -- JSON list
     starts_at   TEXT NOT NULL,           -- ISO, Israel local time
@@ -63,6 +64,8 @@ CREATE TABLE IF NOT EXISTS notifications (
 # Columns added after the first version. Applied automatically to an existing database
 MIGRATIONS = [
     ("users", "paused", "INTEGER NOT NULL DEFAULT 0"),   # per-user alert pause
+    ("users", "theme", "TEXT NOT NULL DEFAULT 'dark'"),  # UI theme: dark / light
+    ("events", "category", "TEXT NOT NULL DEFAULT 'music'"),
     ("events", "availability", "TEXT"),
     ("events", "tickets_left", "INTEGER"),
     ("source_state", "last_synced_at", "TEXT"),           # last successful sync
@@ -89,6 +92,7 @@ def row_to_event(row: sqlite3.Row) -> Event:
         source=row["source"],
         external_id=row["external_id"],
         kind=row["kind"],
+        category=row["category"],
         title=row["title"],
         artists=json.loads(row["artists"]),
         starts_at=datetime.fromisoformat(row["starts_at"]),
@@ -107,7 +111,7 @@ def upsert_event(conn: sqlite3.Connection, event: Event) -> tuple[int, bool]:
     """Save an event. Returns (id, is_new). An existing event is updated with the latest details
     (a known image is kept if the source stops providing one)."""
     values = (
-        event.kind, event.title, json.dumps(event.artists, ensure_ascii=False),
+        event.kind, event.category, event.title, json.dumps(event.artists, ensure_ascii=False),
         event.starts_at.isoformat(), event.ends_at.isoformat() if event.ends_at else None,
         event.venue, event.city, event.url, event.price, event.image_url,
         event.availability, event.tickets_left,
@@ -118,16 +122,16 @@ def upsert_event(conn: sqlite3.Connection, event: Event) -> tuple[int, bool]:
     ).fetchone()
     if row:
         conn.execute(
-            """UPDATE events SET kind=?, title=?, artists=?, starts_at=?, ends_at=?, venue=?,
+            """UPDATE events SET kind=?, category=?, title=?, artists=?, starts_at=?, ends_at=?, venue=?,
                city=?, url=?, price=?, image_url=COALESCE(?, image_url), availability=?,
                tickets_left=?, last_seen=CURRENT_TIMESTAMP WHERE id=?""",
             (*values, row["id"]),
         )
         return row["id"], False
     cur = conn.execute(
-        """INSERT INTO events (source, external_id, kind, title, artists, starts_at, ends_at,
+        """INSERT INTO events (source, external_id, kind, category, title, artists, starts_at, ends_at,
            venue, city, url, price, image_url, availability, tickets_left)
-           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (event.source, event.external_id, *values),
     )
     return cur.lastrowid, True
@@ -186,12 +190,17 @@ def delete_subscription(conn: sqlite3.Connection, user_id: int, subscription_id:
 
 def get_user(conn: sqlite3.Connection, email: str) -> sqlite3.Row | None:
     return conn.execute(
-        "SELECT id, email, paused FROM users WHERE email = ?", (email.strip().lower(),)
+        "SELECT id, email, paused, theme FROM users WHERE email = ?", (email.strip().lower(),)
     ).fetchone()
 
 
 def set_paused(conn: sqlite3.Connection, user_id: int, paused: bool) -> None:
     conn.execute("UPDATE users SET paused = ? WHERE id = ?", (int(paused), user_id))
+    conn.commit()
+
+
+def set_theme(conn: sqlite3.Connection, user_id: int, theme: str) -> None:
+    conn.execute("UPDATE users SET theme = ? WHERE id = ?", (theme, user_id))
     conn.commit()
 
 

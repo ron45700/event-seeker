@@ -13,6 +13,7 @@ class Event:
     city: str
     url: str
     kind: str = "show"     # "show" or "festival"
+    category: str = "music"  # "music" or "standup"; drives the category tabs in the UI
     artists: list[str] = field(default_factory=list)  # guests / festival lineup
     ends_at: datetime | None = None                   # for multi-day events
     price: str | None = None

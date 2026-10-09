@@ -71,21 +71,21 @@ Full interactive docs at `http://localhost:8765/docs` while the server is runnin
 
 | Method | Path | Description |
 |---|---|---|
-| POST | `/api/login` | Body: `{email}`. Returns `{email, paused}` and sets a cookie |
+| POST | `/api/login` | Body: `{email}`. Returns `{email, paused, theme}` and sets a cookie |
 | POST | `/api/logout` | |
-| GET | `/api/me` | `{email, paused}`, or 401 when not signed in |
-| PATCH | `/api/me` | Body: `{paused: bool}` |
+| GET | `/api/me` | `{email, paused, theme}`, or 401 when not signed in |
+| PATCH | `/api/me` | Body: `{paused?: bool, theme?: "dark" \| "light"}`. Only the fields sent change |
 | GET | `/api/subscriptions` | `[{id, artist, venue}]`. `venue: null` = any venue |
 | POST | `/api/subscriptions` | Body: `{artist, venue?}`. Returns the updated list |
 | DELETE | `/api/subscriptions/{id}` | 204 |
-| GET | `/api/events` | Query: `q`, `venue`, `mine`. Upcoming shows ordered by date |
+| GET | `/api/events` | Query: `q`, `venue`, `category`, `mine`. Upcoming events ordered by date |
 | GET | `/api/venues` | `[{venue, city}]` for the filter and the subscription venue picker |
 
 Sample event:
 
 ```json
 {
-  "id": 71, "source": "reading3", "kind": "show",
+  "id": 71, "source": "reading3", "kind": "show", "category": "music",
   "title": "מוניקה סקס", "artists": [],
   "starts_at": "2026-11-13T14:00:00", "ends_at": null,
   "venue": "רידינג 3", "city": "תל אביב",
@@ -98,6 +98,12 @@ Sample event:
 ```
 
 `starts_at` is Israel local time with no timezone. Display it as is, without conversion.
+
+### Category
+
+`category` is `"music"` or `"standup"` and drives the category tabs. More categories may be
+added, so render tabs from a small label map and ignore unknown values gracefully.
+`kind` (`show` / `festival`) is separate: it describes the shape of the event, not its genre.
 
 ### Availability
 

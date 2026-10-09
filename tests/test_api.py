@@ -29,7 +29,7 @@ def test_requires_login(client):
 
 def test_login_subscribe_and_delete(client):
     assert client.post("/api/login", json={"email": "Ron@Example.com"}).json() == {
-        "email": "ron@example.com", "paused": False}
+        "email": "ron@example.com", "paused": False, "theme": "dark"}
     subs = client.post("/api/subscriptions", json={"artist": "טונה", "venue": "בארבי"}).json()
     client.post("/api/subscriptions", json={"artist": "טונה", "venue": "בארבי"})  # duplicate
     assert client.get("/api/subscriptions").json() == [{"id": subs[0]["id"], "artist": "טונה", "venue": "בארבי"}]
@@ -110,3 +110,22 @@ def test_thumbnail_missing_image_and_fallback(client, tmp_path, monkeypatch):
     assert client.get("/api/events/99999/thumbnail").status_code == 404
     response = client.get(f"/api/events/{event_id}/thumbnail", follow_redirects=False)
     assert (response.status_code, response.headers["location"]) == (307, "https://example.com/a.png")
+
+
+def test_theme_is_saved_per_user_without_touching_pause(client):
+    client.post("/api/login", json={"email": "a@example.com"})
+    client.patch("/api/me", json={"paused": True})
+    assert client.patch("/api/me", json={"theme": "light"}).json() == {
+        "email": "a@example.com", "paused": True, "theme": "light"}
+    assert client.patch("/api/me", json={"theme": "pink"}).status_code == 422
+    client.post("/api/login", json={"email": "b@example.com"})
+    assert client.get("/api/me").json()["theme"] == "dark"
+
+
+def test_category_filter(client):
+    conn = db.connect(app.state.db_path)
+    db.upsert_event(conn, Event("s", "su", "ערב סטנדאפ", datetime(2099, 3, 1), "v", "c", "u", category="standup"))
+    conn.commit()
+    assert [e["title"] for e in client.get("/api/events", params={"category": "standup"}).json()] == ["ערב סטנדאפ"]
+    assert "ערב סטנדאפ" not in [e["title"] for e in client.get("/api/events", params={"category": "music"}).json()]
+    assert len(client.get("/api/events").json()) == 3

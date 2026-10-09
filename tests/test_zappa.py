@@ -112,3 +112,9 @@ def test_no_events_anywhere_fails_loudly():
 
     with pytest.raises(ValueError):
         Empty().fetch()
+
+
+def test_standup_is_detected_by_title_keyword(source):
+    assert by_id(source, "21946129").category == "standup"  # "אסף מור יוסף במופע סטנדאפ"
+    assert by_id(source, "21970383").category == "music"
+    assert [e.external_id for e in source.events if e.category == "standup"] == ["21946129"]
