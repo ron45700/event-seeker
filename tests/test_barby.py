@@ -37,3 +37,10 @@ def test_bad_item_does_not_break_the_source():
                     RAW["returnShow"]["show"][0]]
 
     assert [e.external_id for e in Broken().fetch()] == ["5449"]
+
+
+def test_availability_from_sold_counts():
+    events = {e.external_id: e for e in FixtureBarby().fetch()}
+    assert (events["5449"].availability, events["5449"].tickets_left) == ("sold_out", 0)    # 1154 of 1154
+    assert (events["5436"].availability, events["5436"].tickets_left) == ("available", 267)  # 733 of 1000
+    assert (events["5443"].availability, events["5443"].tickets_left) == ("sold_out", 0)    # 1162 of 1160

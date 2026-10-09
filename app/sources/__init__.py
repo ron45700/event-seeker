@@ -2,8 +2,10 @@
 from app.sources.barby import BarbySource
 from app.sources.base import Source
 from app.sources.reading3 import Reading3Source
+from app.sources.zappa import ZappaSource
 
 ALL_SOURCES: list[Source] = [
     BarbySource(),
     Reading3Source(),
+    ZappaSource(),
 ]

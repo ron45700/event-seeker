@@ -63,6 +63,14 @@ WebP once and caches it in `data/thumbs/` (safe to delete; `THUMB_WIDTH` sets th
 | `docs/UI_BRIEF.md` | Brief for building the UI, including the API contract |
 | `web/` | Built UI files, served at `/` |
 
+## Sources
+
+| Source | Venues | How | Availability |
+|---|---|---|---|
+| `barby` | Barby | JSON API | sold out + tickets left |
+| `reading3` | Reading 3 | HTML listing page | not exposed |
+| `zappa` | Zappa Amphi Shuni, Tel Aviv, Herzliya | HTML venue pages with JSON-LD, paginated | available / not available |
+
 ## Adding a source
 
 1. Add a file under `app/sources/` with a class that extends `Source` and implements `fetch_raw` and `parse_item`.

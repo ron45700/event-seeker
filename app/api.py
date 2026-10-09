@@ -172,6 +172,8 @@ def list_events(
             "url": event.url,
             "price": event.price,
             "image_url": event.image_url,
+            "availability": event.availability,
+            "tickets_left": event.tickets_left,
             "subscribed": subscribed,
         })
     return result

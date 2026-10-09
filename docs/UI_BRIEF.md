@@ -92,11 +92,27 @@ Sample event:
   "url": "https://www.reading3.co.il/he/shows/a/view/?ContentID=4604",
   "price": null,
   "image_url": "https://www.reading3.co.il/Warehouse/content/pics/pic_4604_C.jpg",
+  "availability": null, "tickets_left": null,
   "subscribed": false
 }
 ```
 
 `starts_at` is Israel local time with no timezone. Display it as is, without conversion.
+
+### Availability
+
+`availability` is refreshed on every hourly run and is one of:
+
+| Value | Meaning | Where it comes from |
+|---|---|---|
+| `"available"` | Tickets on sale | Barby, Zappa |
+| `"sold_out"` | Sold out | Barby (tickets sold reached the cap) |
+| `"unavailable"` | The site shows the show as not available, without saying why. It may be sold out, or sales may simply have closed. Label it "לא זמין", not "sold out" | Zappa |
+| `null` | Unknown: the site exposes nothing | Reading 3 |
+
+`tickets_left` is a number only where the site exposes counts (Barby), otherwise `null`.
+Sold-out and unavailable shows stay in the list; they should look clearly different from
+shows you can still buy, without relying on colour alone.
 
 ## Technical constraints
 

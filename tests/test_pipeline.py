@@ -112,3 +112,13 @@ def test_paused_user_gets_no_alerts():
     source.titles = {"1": "טונה"}
     run_once(conn, [source], notifier)
     assert notifier.sent == []
+
+
+def test_availability_changes_are_stored_without_a_new_alert_and_image_is_kept():
+    conn = db.connect(":memory:")
+    event = Event("s", "1", "x", datetime(2099, 1, 1), "v", "c", "u", image_url="img", availability="available", tickets_left=5)
+    event_id, is_new = db.upsert_event(conn, event)
+    event.availability, event.tickets_left, event.image_url = "sold_out", 0, None
+    assert db.upsert_event(conn, event) == (event_id, False)
+    stored = db.upcoming_events(conn)[0][1]
+    assert (stored.availability, stored.tickets_left, stored.image_url) == ("sold_out", 0, "img")

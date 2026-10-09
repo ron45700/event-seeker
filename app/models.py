@@ -17,6 +17,9 @@ class Event:
     ends_at: datetime | None = None                   # for multi-day events
     price: str | None = None
     image_url: str | None = None
+    # "available", "sold_out", "unavailable" (site gives no reason), or None when unknown
+    availability: str | None = None
+    tickets_left: int | None = None                   # only where the site exposes counts
 
     def searchable_text(self) -> str:
         """All the text an artist name is searched in."""

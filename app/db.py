@@ -37,6 +37,8 @@ CREATE TABLE IF NOT EXISTS events (
     url         TEXT NOT NULL,
     price       TEXT,
     image_url   TEXT,
+    availability TEXT,                   -- available / sold_out / unavailable / NULL = unknown
+    tickets_left INTEGER,
     first_seen  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_seen   TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UNIQUE (source, external_id)
@@ -61,6 +63,8 @@ CREATE TABLE IF NOT EXISTS notifications (
 # Columns added after the first version. Applied automatically to an existing database
 MIGRATIONS = [
     ("users", "paused", "INTEGER NOT NULL DEFAULT 0"),   # per-user alert pause
+    ("events", "availability", "TEXT"),
+    ("events", "tickets_left", "INTEGER"),
     ("source_state", "last_synced_at", "TEXT"),           # last successful sync
 ]
 
@@ -94,15 +98,19 @@ def row_to_event(row: sqlite3.Row) -> Event:
         url=row["url"],
         price=row["price"],
         image_url=row["image_url"],
+        availability=row["availability"],
+        tickets_left=row["tickets_left"],
     )
 
 
 def upsert_event(conn: sqlite3.Connection, event: Event) -> tuple[int, bool]:
-    """Save an event. Returns (id, is_new). An existing event is updated with the latest details."""
+    """Save an event. Returns (id, is_new). An existing event is updated with the latest details
+    (a known image is kept if the source stops providing one)."""
     values = (
         event.kind, event.title, json.dumps(event.artists, ensure_ascii=False),
         event.starts_at.isoformat(), event.ends_at.isoformat() if event.ends_at else None,
         event.venue, event.city, event.url, event.price, event.image_url,
+        event.availability, event.tickets_left,
     )
     row = conn.execute(
         "SELECT id FROM events WHERE source = ? AND external_id = ?",
@@ -111,13 +119,15 @@ def upsert_event(conn: sqlite3.Connection, event: Event) -> tuple[int, bool]:
     if row:
         conn.execute(
             """UPDATE events SET kind=?, title=?, artists=?, starts_at=?, ends_at=?, venue=?,
-               city=?, url=?, price=?, image_url=?, last_seen=CURRENT_TIMESTAMP WHERE id=?""",
+               city=?, url=?, price=?, image_url=COALESCE(?, image_url), availability=?,
+               tickets_left=?, last_seen=CURRENT_TIMESTAMP WHERE id=?""",
             (*values, row["id"]),
         )
         return row["id"], False
     cur = conn.execute(
         """INSERT INTO events (source, external_id, kind, title, artists, starts_at, ends_at,
-           venue, city, url, price, image_url) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
+           venue, city, url, price, image_url, availability, tickets_left)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (event.source, event.external_id, *values),
     )
     return cur.lastrowid, True
