@@ -2,7 +2,8 @@
 import logging
 import sqlite3
 
-from app import db
+from app import config, db
+from app.alerts import Alerter
 from app.matching import matches
 from app.models import Event
 from app.notifier import Notifier
@@ -11,8 +12,9 @@ from app.sources.base import Source
 log = logging.getLogger(__name__)
 
 
-def sync_source(conn: sqlite3.Connection, source: Source) -> list[tuple[int, Event]]:
-    """Fetch and store one source. Returns the new events to check against subscriptions.
+def sync_source(conn: sqlite3.Connection, source: Source) -> tuple[list[tuple[int, Event]], int]:
+    """Fetch and store one source. Returns the new events to check against subscriptions,
+    and how many events the source returned in total.
 
     On a source's first sync all events are stored as a baseline with no alerts,
     otherwise every show already listed on the site would count as new.
@@ -30,18 +32,66 @@ def sync_source(conn: sqlite3.Connection, source: Source) -> list[tuple[int, Eve
         "%s: %d events, %d new%s",
         source.name, len(events), len(new_events), " (first sync, no alerts)" if first_sync else "",
     )
-    return [] if first_sync else new_events
+    return ([] if first_sync else new_events), len(events)
 
 
-def run_once(conn: sqlite3.Connection, sources: list[Source], notifier: Notifier | None) -> None:
+def track_health(
+    conn: sqlite3.Connection, source: str, error: str | None, event_count: int, alerter: Alerter | None
+) -> None:
+    """Record the outcome of a source's run and tell the operator when it breaks or recovers.
+
+    One message when the source has failed SOURCE_ALERT_AFTER_FAILURES runs in a row, one when
+    it works again. A message that could not be sent is retried on the next run.
+    """
+    state = db.record_source_result(conn, source, error, event_count)
+    conn.commit()
+    if alerter is None:
+        return
+    failures = state["consecutive_failures"]
+    if error and failures >= config.SOURCE_ALERT_AFTER_FAILURES and not state["alerted"]:
+        text = (
+            f"\u26a0\ufe0f event_seeker: source '{source}' is broken\n"
+            f"Failed {failures} runs in a row, no shows are coming in from it.\n"
+            f"Last success: {state['last_success_at'] or 'never'} UTC\n"
+            f"Error: {error}"
+        )
+        alerted = True
+    elif not error and state["alerted"]:
+        text = f"\u2705 event_seeker: source '{source}' is working again ({event_count} events)"
+        alerted = False
+    else:
+        return
+    try:
+        alerter.send(text)
+    except Exception:
+        log.exception("%s: failed to send operator alert, will retry next run", source)
+        return
+    db.set_source_alerted(conn, source, alerted)
+    conn.commit()
+
+
+def run_once(
+    conn: sqlite3.Connection,
+    sources: list[Source],
+    notifier: Notifier | None,
+    alerter: Alerter | None = None,
+) -> None:
     new_events: list[tuple[int, Event]] = []
     for source in sources:
         try:
-            new_events += sync_source(conn, source)
-        except Exception:
+            found, count = sync_source(conn, source)
+        except Exception as exc:
             # one failing source does not stop the others
             conn.rollback()
             log.exception("%s: sync failed", source.name)
+            track_health(conn, source.name, f"{type(exc).__name__}: {exc}"[:300], 0, alerter)
+            continue
+        new_events += found
+        # A site that changed its markup usually parses to nothing instead of raising
+        error = None if count else "returned no events"
+        if error:
+            log.warning("%s: %s", source.name, error)
+        track_health(conn, source.name, error, count, alerter)
 
     if new_events:
         for sub in db.list_subscriptions(conn, active_only=True):

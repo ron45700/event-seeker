@@ -1,0 +1,13 @@
+# Only app/, requirements.txt and frontend/ sources are needed to build the image.
+.git
+.github
+.env
+.venv
+data
+web
+docs
+tests
+frontend/node_modules
+**/__pycache__
+**/*.pyc
+.pytest_cache

@@ -27,6 +27,40 @@ Email is off by default. To turn it on: copy `.env.example` to `.env`, fill in
 While the switch is off, alerts wait in the queue and are sent once it is turned on.
 Alerts for shows that already took place are never sent.
 
+## Docker
+
+Every push to `main` runs the tests and publishes an image with the built UI inside
+(`.github/workflows/docker.yml`): `ghcr.io/ron45700/event-seeker:latest`, plus a `sha-...` tag
+per commit. The home server runs that image from the `homelab` repo
+(`stacks/event-seeker/`), so an update there is `docker compose pull && docker compose up -d`.
+
+```
+docker build -t event-seeker .
+docker run -p 8765:8765 -v ./data:/app/data --env-file .env event-seeker
+```
+
+Settings come from environment variables (the same names as in `.env.example`); the database
+and the thumbnail cache are in `/app/data`. The image runs in the `Asia/Jerusalem` time zone.
+
+## Monitoring and operator alerts
+
+Every run records, per source, whether it worked. A run that raised an error or returned no
+events at all is a failure (a site that changed its markup usually parses to nothing).
+
+| Endpoint | Answers |
+|---|---|
+| `/health` | 200 while the server and database work. `status` is `ok` or `degraded`, with the details of every source |
+| `/health/sources` | 200, or 503 when any source is unhealthy |
+| `/health/sources/{name}` | The same for one source (`barby`, `reading3`, `zappa`) |
+
+A source is unhealthy after `SOURCE_ALERT_AFTER_FAILURES` failed runs in a row (default 3), or
+when it was not attempted for more than two fetch intervals (the background run stopped).
+The two `/health/sources` endpoints are meant for an uptime monitor such as Uptime Kuma.
+
+With `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` set, the same condition sends one Telegram
+message when a source breaks and one when it works again (`app/alerts.py`). Check the setup
+with `python -m app.main test-alert`.
+
 ## Frontend
 
 The UI source is in `frontend/` (React, TypeScript, Vite). It builds to `web/`, which the
@@ -58,6 +92,7 @@ WebP once and caches it in `data/thumbs/` (safe to delete; `THUMB_WIDTH` sets th
 | `app/matching.py` | Matching a subscription against an event |
 | `app/pipeline.py` | One run: fetch, detect new events, match, send |
 | `app/notifier.py` | Sending the alert emails |
+| `app/alerts.py` | Operator alerts (Telegram) |
 | `app/api.py` | The site API and the scheduled background run |
 | `app/main.py` | Command line |
 | `docs/UI_BRIEF.md` | Brief for building the UI, including the API contract |

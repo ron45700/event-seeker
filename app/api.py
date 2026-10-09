@@ -5,6 +5,7 @@ Login is email-only with no password: the site is reachable only over Tailscale.
 import logging
 import re
 import threading
+from datetime import datetime, timedelta, timezone
 from contextlib import asynccontextmanager
 from typing import Literal
 
@@ -14,6 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from app import config, db, thumbs
+from app.alerts import get_alerter
 from app.matching import contains_term, matches
 from app.notifier import get_notifier
 from app.pipeline import run_once
@@ -29,7 +31,7 @@ def _scheduler(stop: threading.Event) -> None:
     conn = db.connect(config.DB_PATH)
     while not stop.is_set():
         try:
-            run_once(conn, ALL_SOURCES, get_notifier())
+            run_once(conn, ALL_SOURCES, get_notifier(), get_alerter())
         except Exception:
             log.exception("scheduled run failed")
         stop.wait(config.FETCH_INTERVAL_MINUTES * 60)
@@ -215,13 +217,77 @@ def list_venues(conn=Depends(get_conn)):
     return [{"venue": venue, "city": city} for venue, city in sorted(venues)]
 
 
+def _utc(timestamp: str | None) -> datetime | None:
+    """SQLite CURRENT_TIMESTAMP ('YYYY-MM-DD HH:MM:SS', UTC) as an aware datetime."""
+    return datetime.fromisoformat(timestamp).replace(tzinfo=timezone.utc) if timestamp else None
+
+
+def _sources_health(conn) -> list[dict]:
+    """Health of every active source.
+
+    Unhealthy = failed SOURCE_ALERT_AFTER_FAILURES runs in a row, or not attempted for more
+    than two fetch intervals (the background run stopped). A source that has not run yet,
+    right after the first start, counts as healthy.
+    """
+    stored = db.source_health(conn)
+    synced = {row["source"]: row for row in db.source_status(conn)}
+    stale_before = datetime.now(timezone.utc) - timedelta(minutes=2 * config.FETCH_INTERVAL_MINUTES + 5)
+    result = []
+    for name in (source.name for source in ALL_SOURCES):
+        row = stored.get(name)
+        failures = row["consecutive_failures"] if row else 0
+        problem = None
+        if row and failures >= config.SOURCE_ALERT_AFTER_FAILURES:
+            problem = row["last_error"]
+        elif row and _utc(row["last_attempt_at"]) < stale_before:
+            problem = "not attempted recently, the background run may have stopped"
+        result.append({
+            "source": name,
+            "healthy": problem is None,
+            "problem": problem,
+            "consecutive_failures": failures,
+            "last_error": row["last_error"] if row else None,
+            "last_attempt_at": row["last_attempt_at"] if row else None,
+            "last_success_at": row["last_success_at"] if row else None,
+            "last_event_count": row["last_event_count"] if row else None,
+            "first_synced_at": synced[name]["first_synced_at"] if name in synced else None,
+            "last_synced_at": synced[name]["last_synced_at"] if name in synced else None,
+        })
+    return result
+
+
 @app.get("/health")
 def health(conn=Depends(get_conn)):
+    """Liveness: answers 200 whenever the server and the database work, even if a source is
+    broken. For monitoring the sources themselves use /health/sources."""
+    sources = _sources_health(conn)
     return {
-        "status": "ok",
+        "status": "ok" if all(s["healthy"] for s in sources) else "degraded",
         "emails_enabled": config.EMAIL_ENABLED,
-        "sources": [dict(row) for row in db.source_status(conn)],
+        "operator_alerts_enabled": get_alerter() is not None,
+        "sources": sources,
     }
+
+
+@app.get("/health/sources")
+def health_sources(response: Response, conn=Depends(get_conn)):
+    """503 when any source is unhealthy, so an uptime monitor can watch it by status code."""
+    sources = _sources_health(conn)
+    broken = [s["source"] for s in sources if not s["healthy"]]
+    if broken:
+        response.status_code = 503
+    return {"status": "degraded" if broken else "ok", "broken": broken, "sources": sources}
+
+
+@app.get("/health/sources/{name}")
+def health_source(name: str, response: Response, conn=Depends(get_conn)):
+    """One source: 200 healthy, 503 unhealthy, 404 unknown. For a monitor per venue site."""
+    for source in _sources_health(conn):
+        if source["source"] == name:
+            if not source["healthy"]:
+                response.status_code = 503
+            return source
+    raise HTTPException(404, "unknown source")
 
 
 if config.WEB_DIR.is_dir():

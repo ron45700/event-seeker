@@ -35,3 +35,9 @@ SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "").replace(" ", "")  # Google d
 
 # Global switch, off by default: no email goes to any subscriber and alerts wait in the queue
 EMAIL_ENABLED = os.environ.get("EMAIL_ENABLED", "false").strip().lower() in ("1", "true", "yes", "on")
+
+# Operator alerts (Telegram). Both empty = no messages; source health is still tracked.
+TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
+# A source counts as broken after this many failed runs in a row (one run per FETCH_INTERVAL_MINUTES)
+SOURCE_ALERT_AFTER_FAILURES = int(os.environ.get("SOURCE_ALERT_AFTER_FAILURES", "3"))

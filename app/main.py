@@ -6,6 +6,7 @@
     python -m app.main list                             show subscriptions
     python -m app.main inject-fake TITLE [--venue]      add a fake event and run the alert flow
     python -m app.main remove-fake                      delete all fake events
+    python -m app.main test-alert                       send a test message to the operator (Telegram)
 """
 import argparse
 import logging
@@ -13,6 +14,7 @@ import sys
 from datetime import datetime, timedelta
 
 from app import config, db
+from app.alerts import get_alerter
 from app.models import Event
 from app.notifier import get_notifier
 from app.pipeline import run_once
@@ -52,6 +54,7 @@ def main() -> None:
     commands.add_parser("serve")
     commands.add_parser("list")
     commands.add_parser("remove-fake")
+    commands.add_parser("test-alert")
     fake = commands.add_parser("inject-fake")
     fake.add_argument("title")
     fake.add_argument("--venue", default="מקום בדיקה")
@@ -74,7 +77,7 @@ def main() -> None:
         for sub in db.list_subscriptions(conn):
             print(f"{sub['email']}: {sub['artist']}" + (f" ({sub['venue']})" if sub["venue"] else ""))
     elif args.command == "run-once":
-        run_once(conn, ALL_SOURCES, get_notifier())
+        run_once(conn, ALL_SOURCES, get_notifier(), get_alerter())
     elif args.command == "inject-fake":
         # mark the source as already synced, otherwise its first event would be a silent baseline
         db.mark_source_synced(conn, FakeSource.name)
@@ -85,6 +88,12 @@ def main() -> None:
         removed = conn.execute("DELETE FROM events WHERE source = ?", (FakeSource.name,)).rowcount
         conn.commit()
         print(f"Removed {removed} fake event(s)")
+    elif args.command == "test-alert":
+        alerter = get_alerter()
+        if alerter is None:
+            sys.exit("TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID are not set")
+        alerter.send("\u2705 event_seeker: test message, operator alerts are working")
+        print("Test message sent")
     elif args.command == "serve":
         import uvicorn
 

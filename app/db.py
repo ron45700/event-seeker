@@ -51,6 +51,18 @@ CREATE TABLE IF NOT EXISTS source_state (
     first_synced_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+-- One row per source that was ever attempted, updated on every run (unlike source_state,
+-- which only knows successful syncs). A run that raised or returned no events is a failure.
+CREATE TABLE IF NOT EXISTS source_health (
+    source               TEXT PRIMARY KEY,
+    last_attempt_at      TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_success_at      TEXT,
+    last_error           TEXT,               -- NULL while healthy
+    last_event_count     INTEGER,            -- events returned by the last successful run
+    consecutive_failures INTEGER NOT NULL DEFAULT 0,
+    alerted              INTEGER NOT NULL DEFAULT 0  -- 1 = the operator was told it is broken
+);
+
 -- sent_at NULL = waiting to be sent (or sending failed and will be retried next run)
 CREATE TABLE IF NOT EXISTS notifications (
     user_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -221,6 +233,35 @@ def source_status(conn: sqlite3.Connection) -> list[sqlite3.Row]:
     return conn.execute(
         "SELECT source, first_synced_at, last_synced_at FROM source_state ORDER BY source"
     ).fetchall()
+
+
+def record_source_result(
+    conn: sqlite3.Connection, source: str, error: str | None, event_count: int = 0
+) -> sqlite3.Row:
+    """Store the outcome of one run of a source and return its updated health row."""
+    conn.execute("INSERT OR IGNORE INTO source_health (source) VALUES (?)", (source,))
+    if error is None:
+        conn.execute(
+            """UPDATE source_health SET last_attempt_at = CURRENT_TIMESTAMP,
+               last_success_at = CURRENT_TIMESTAMP, last_error = NULL, last_event_count = ?,
+               consecutive_failures = 0 WHERE source = ?""",
+            (event_count, source),
+        )
+    else:
+        conn.execute(
+            """UPDATE source_health SET last_attempt_at = CURRENT_TIMESTAMP, last_error = ?,
+               consecutive_failures = consecutive_failures + 1 WHERE source = ?""",
+            (error, source),
+        )
+    return conn.execute("SELECT * FROM source_health WHERE source = ?", (source,)).fetchone()
+
+
+def set_source_alerted(conn: sqlite3.Connection, source: str, alerted: bool) -> None:
+    conn.execute("UPDATE source_health SET alerted = ? WHERE source = ?", (int(alerted), source))
+
+
+def source_health(conn: sqlite3.Connection) -> dict[str, sqlite3.Row]:
+    return {row["source"]: row for row in conn.execute("SELECT * FROM source_health")}
 
 
 def queue_notification(conn: sqlite3.Connection, user_id: int, event_id: int) -> None:
