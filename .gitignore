@@ -5,3 +5,7 @@ __pycache__/
 .pytest_cache/
 data/*.db
 data/*.db-*
+
+# Frontend build output and dependencies
+web/
+frontend/node_modules/

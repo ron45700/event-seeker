@@ -1,0 +1,79 @@
+.page {
+  display: flex;
+  justify-content: center;
+  padding: 32px var(--gutter);
+}
+
+@media (min-width: 600px) {
+  .page {
+    padding-top: 12vh;
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 400px;
+}
+
+.heading {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 4rem;
+  line-height: 0.9;
+  padding-top: 0.12em;
+}
+
+.lead {
+  margin: 8px 0 28px;
+  color: var(--fog);
+  text-wrap: pretty;
+}
+
+.label {
+  margin-bottom: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--fog);
+}
+
+.input {
+  height: 52px;
+  padding-inline: 14px;
+  border: 1px solid var(--rail);
+  border-radius: var(--radius-control);
+  background: var(--stage-raised);
+  font-size: 1.0625rem;
+  text-align: left;
+}
+
+.input::placeholder {
+  color: var(--fog);
+}
+
+.input[aria-invalid='true'] {
+  border-color: var(--alarm);
+}
+
+.error {
+  margin-top: 8px;
+  color: var(--alarm);
+  font-size: 0.875rem;
+}
+
+.submit {
+  height: 52px;
+  margin-top: 16px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--sodium);
+  color: var(--sodium-ink);
+  font-weight: 600;
+  font-size: 1.0625rem;
+}
+
+.submit:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}

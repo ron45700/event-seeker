@@ -1,0 +1,60 @@
+.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: var(--tap);
+  padding: 4px 0;
+  border: 0;
+  background: transparent;
+  text-align: start;
+}
+
+.toggle:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-weight: 500;
+}
+
+.description {
+  font-size: 0.875rem;
+  color: var(--fog);
+}
+
+.track {
+  flex: none;
+  display: flex;
+  align-items: center;
+  width: 48px;
+  height: 28px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--rail);
+  transition: background-color 160ms ease-out;
+}
+
+.thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--paper);
+  transition: transform 160ms ease-out;
+}
+
+.toggle[aria-checked='true'] .track {
+  background: var(--sodium);
+}
+
+/* The app is right-to-left: "on" moves the thumb toward the inline end, which is left. */
+.toggle[aria-checked='true'] .thumb {
+  transform: translateX(-20px);
+  background: var(--sodium-ink);
+}

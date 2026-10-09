@@ -1,0 +1,278 @@
+.card {
+  display: flex;
+  min-width: 0;
+}
+
+.link {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--radius-card);
+}
+
+/* The ticket: the two notches are cut with a mask at the perforation line, which sits
+   a fixed --meta-h above the bottom edge, so they line up whatever the title length. */
+.ticket {
+  --meta-h: 44px;
+  --notch: 8px;
+  --notch-y: calc(100% - var(--meta-h));
+  --cut: #0000 var(--notch), #000 calc(var(--notch) + 0.5px);
+
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  container-type: inline-size;
+  background: var(--stage);
+  border: 1px solid var(--rail);
+  border-radius: var(--radius-card);
+  overflow: hidden;
+  transition: transform 120ms ease-out;
+  -webkit-mask:
+    radial-gradient(circle var(--notch) at 0 var(--notch-y), var(--cut)),
+    radial-gradient(circle var(--notch) at 100% var(--notch-y), var(--cut));
+  -webkit-mask-composite: source-in;
+  mask:
+    radial-gradient(circle var(--notch) at 0 var(--notch-y), var(--cut)),
+    radial-gradient(circle var(--notch) at 100% var(--notch-y), var(--cut));
+  mask-composite: intersect;
+}
+
+.link:active .ticket {
+  transform: scale(0.985);
+}
+
+.link[data-subscribed] .ticket {
+  border-color: var(--sodium);
+  box-shadow: inset 0 0 0 1px var(--sodium);
+}
+
+/* Art */
+
+.art {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: var(--venue-deep);
+  container-type: inline-size;
+}
+
+.image,
+.backdrop {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.image {
+  opacity: 0;
+  transition: opacity 240ms ease-out;
+}
+
+.image[data-loaded] {
+  opacity: 1;
+}
+
+.image[data-fit='contain'] {
+  object-fit: contain;
+}
+
+.backdrop {
+  inset: -12%;
+  width: 124%;
+  height: 124%;
+  filter: blur(20px) brightness(0.55) saturate(1.2);
+}
+
+/* Fallback poster for a missing or broken image: the title, set large, in a printed frame. */
+.poster {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  padding: 22cqi 10cqi 30cqi;
+  background: var(--venue-deep);
+  box-shadow:
+    inset 0 0 0 5cqi var(--venue-deep),
+    inset 0 0 0 calc(5cqi + 1.5px) var(--venue);
+}
+
+.posterTitle {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 17cqi;
+  line-height: 0.92;
+  color: var(--venue-glow);
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.badge {
+  position: absolute;
+  top: 8px;
+  inset-inline-start: 8px;
+  max-width: calc(100% - 16px);
+}
+
+.follow {
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px 3px 7px;
+  border-radius: 999px;
+  background: var(--sodium);
+  color: var(--sodium-ink);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+/* On the narrowest cards (360px phones) the venue badge keeps the room and the
+   "following" chip shrinks to its star; the word stays for screen readers. */
+@container (max-width: 172px) {
+  .follow {
+    padding: 4px;
+  }
+
+  .followText {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
+
+/* Date stub: a paper tab pinned to the poster's bottom corner. */
+.stub {
+  position: absolute;
+  bottom: 8px;
+  inset-inline-start: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 46px;
+  padding: 6px 8px 5px;
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--night);
+  line-height: 1;
+  border-bottom: 3px dotted color-mix(in oklab, var(--night) 30%, transparent);
+}
+
+.link[data-subscribed] .stub {
+  background: var(--sodium);
+  color: var(--sodium-ink);
+}
+
+.day {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2.25rem;
+  line-height: 0.8;
+  padding-top: 5px;
+}
+
+.month {
+  margin-top: 3px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Body */
+
+.body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px 12px;
+}
+
+.kind {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--venue-glow);
+}
+
+.until {
+  color: var(--fog);
+  font-weight: 500;
+}
+
+.title {
+  font-family: var(--card-title-font, var(--font-display));
+  font-weight: 700;
+  font-size: clamp(1.5rem, 0.95rem + 5.5cqi, 2.125rem);
+  line-height: 1;
+  padding-top: 0.12em;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.people {
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: var(--fog);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.perforation {
+  height: 0;
+  margin-inline: calc(var(--notch) + 6px);
+  border-top: 2px dashed var(--rail);
+}
+
+.link[data-subscribed] .perforation {
+  border-top-color: color-mix(in oklab, var(--sodium) 45%, var(--rail));
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: var(--meta-h);
+  padding-inline: 12px;
+  font-size: 0.875rem;
+  white-space: nowrap;
+}
+
+.when {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+
+.weekday {
+  color: var(--fog);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.time,
+.price {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}

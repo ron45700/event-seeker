@@ -1,0 +1,67 @@
+.sheet {
+  width: 100%;
+  max-width: 560px;
+  max-height: 85dvh;
+  margin: auto auto 0;
+  padding: 0;
+  border: 0;
+  border-radius: 18px 18px 0 0;
+  background: var(--stage);
+  color: var(--paper);
+}
+
+.sheet::backdrop {
+  background: rgb(5 7 12 / 0.6);
+}
+
+.sheet[open] {
+  animation: slide-up 200ms ease-out;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 8px var(--gutter) calc(16px + env(safe-area-inset-bottom, 0px));
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.heading {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2.25rem;
+  line-height: 1;
+  padding-top: 0.15em;
+}
+
+.close {
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  margin-inline-end: -10px;
+  border: 0;
+  background: transparent;
+  color: var(--fog);
+}
+
+.done {
+  min-height: 50px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--sodium);
+  color: var(--sodium-ink);
+  font-weight: 600;
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+}

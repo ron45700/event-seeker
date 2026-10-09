@@ -1,0 +1,315 @@
+.page {
+  padding: 8px var(--gutter) 0;
+}
+
+.heading {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 3rem;
+  line-height: 0.9;
+  padding-top: 0.12em;
+  margin-bottom: 16px;
+}
+
+@media (min-width: 600px) {
+  .heading {
+    font-size: 3.75rem;
+    margin-top: 16px;
+  }
+}
+
+/* One column up to iPad landscape; then the list on the start side and the artist's
+   shows beside it. On a phone the shows come right after the form, so a newly added
+   artist's shows are in view at once. */
+.layout {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+@media (min-width: 1024px) {
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(340px, 400px) minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr;
+    grid-template-areas:
+      'form shows'
+      'list shows'
+      'settings shows';
+    column-gap: 40px;
+    align-items: start;
+  }
+}
+
+.formArea {
+  grid-area: form;
+}
+
+.showsArea {
+  grid-area: shows;
+}
+
+.showsArea:empty {
+  display: none;
+}
+
+.listArea {
+  grid-area: list;
+}
+
+.settingsArea {
+  grid-area: settings;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 20px;
+  border-top: 1px solid var(--rail);
+}
+
+/* Form */
+
+.form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'artist artist'
+    'venue submit'
+    'error error';
+  gap: 12px;
+  align-items: end;
+  padding: 16px;
+  border-radius: var(--radius-card);
+  background: var(--stage);
+}
+
+@media (min-width: 600px) and (max-width: 1023px) {
+  .form {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) auto;
+    grid-template-areas:
+      'artist venue submit'
+      'error error error';
+  }
+}
+
+.artistField {
+  grid-area: artist;
+}
+
+.venueField {
+  grid-area: venue;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--fog);
+}
+
+.input,
+.select {
+  width: 100%;
+  height: 48px;
+  padding-inline: 14px;
+  border: 1px solid var(--rail);
+  border-radius: var(--radius-control);
+  background: var(--stage-raised);
+  font-size: 1rem;
+}
+
+.input::placeholder {
+  color: var(--fog);
+}
+
+.input[aria-invalid='true'] {
+  border-color: var(--alarm);
+}
+
+.select {
+  appearance: none;
+  padding-inline-end: 40px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%239aa3b5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 6 4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: left 14px center;
+}
+
+.primary {
+  grid-area: submit;
+  height: 48px;
+  padding-inline: 24px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--sodium);
+  color: var(--sodium-ink);
+  font-weight: 600;
+}
+
+.primary:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.error {
+  grid-area: error;
+  color: var(--alarm);
+  font-size: 0.875rem;
+}
+
+/* List */
+
+.subheading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2rem;
+  line-height: 1;
+  padding-top: 0.12em;
+}
+
+.subcount {
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--fog);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border-bottom: 1px solid var(--rail);
+}
+
+.rowMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 56px;
+  padding: 8px 10px;
+  margin-inline-start: -10px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  text-align: start;
+}
+
+.rowMain[aria-pressed='true'] {
+  background: var(--stage-raised);
+}
+
+.artist {
+  font-size: 1.0625rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.anyVenue {
+  flex: none;
+  font-size: 0.8125rem;
+  color: var(--fog);
+}
+
+.delete,
+.iconButton {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  border: 0;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--fog);
+}
+
+/* Settings */
+
+.setting > * {
+  width: 100%;
+}
+
+.account {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+}
+
+.email {
+  color: var(--paper);
+  overflow-wrap: anywhere;
+}
+
+.secondary {
+  min-height: var(--tap);
+  padding-inline: 16px;
+  border: 1px solid var(--rail);
+  border-radius: var(--radius-control);
+  background: transparent;
+  font-weight: 500;
+}
+
+.muted {
+  color: var(--fog);
+}
+
+.hint {
+  color: var(--fog);
+  padding: 4px 0;
+}
+
+/* Artist's shows */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.panelHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.panelHeading {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2rem;
+  line-height: 1;
+  padding-top: 0.15em;
+  text-wrap: balance;
+}
+
+.panelVenue {
+  align-self: flex-start;
+}
+
+.note {
+  padding: 10px 14px;
+  border-inline-start: 3px solid var(--sodium);
+  border-radius: 4px;
+  background: color-mix(in oklab, var(--sodium) 10%, var(--stage));
+  font-size: 0.9375rem;
+}

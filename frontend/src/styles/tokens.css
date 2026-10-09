@@ -1,0 +1,48 @@
+/* Design tokens. Dark only: the site sits next to Jellyfin and Seerr in a Homarr dashboard. */
+:root {
+  color-scheme: dark;
+
+  /* Palette */
+  --night: #10131c; /* page */
+  --stage: #1a1f2d; /* cards, sheets */
+  --stage-raised: #232a3b; /* inputs, chips */
+  --rail: #2c3345; /* lines, perforation */
+  --paper: #ede9e0; /* main text, ticket stub */
+  --fog: #9aa3b5; /* secondary text */
+  --sodium: #f4b740; /* followed shows, primary actions */
+  --sodium-ink: #2b1d02;
+  --alarm: #ff9a8f;
+
+  /* Type */
+  --font-display: 'Karantina', 'IBM Plex Sans Hebrew', system-ui, sans-serif;
+  --font-ui: 'IBM Plex Sans Hebrew', system-ui, sans-serif;
+
+  /* Layout */
+  --gutter: 16px;
+  --content-max: 1680px;
+  --radius-card: 12px;
+  --radius-control: 10px;
+  --radius-badge: 4px;
+  --tap: 44px;
+  --grid-gap: 12px;
+
+  /* Sticky offsets. --topbar-h and --filterbar-h are measured at runtime. */
+  --stick-top: 0px;
+  --tabbar-space: calc(64px + env(safe-area-inset-bottom, 0px));
+}
+
+@media (min-width: 600px) {
+  :root {
+    --gutter: 24px;
+    --grid-gap: 16px;
+    --stick-top: var(--topbar-h, 64px);
+    --tabbar-space: 0px;
+  }
+}
+
+@media (min-width: 1280px) {
+  :root {
+    --gutter: 32px;
+    --grid-gap: 20px;
+  }
+}

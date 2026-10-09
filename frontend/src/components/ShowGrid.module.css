@@ -1,0 +1,74 @@
+.frame {
+  container-type: inline-size;
+}
+
+/* Roughly 2 columns on a phone, 3 to 4 on an iPad, 5 to 6 on a desktop. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--grid-gap);
+}
+
+@container (min-width: 560px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@container (min-width: 900px) {
+  .grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@container (min-width: 1200px) {
+  .grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+@container (min-width: 1500px) {
+  .grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+/* Skeleton cards share the grid and the card's proportions. */
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-card);
+  background: var(--stage);
+  overflow: hidden;
+}
+
+.skeletonArt {
+  aspect-ratio: 1;
+  background: var(--stage-raised);
+}
+
+.skeletonLine {
+  height: 18px;
+  margin: 14px 12px 0;
+  border-radius: 4px;
+  background: var(--stage-raised);
+}
+
+.skeletonLine + .skeletonLine {
+  width: 55%;
+  margin-top: 8px;
+  margin-bottom: 58px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .skeletonArt,
+  .skeletonLine {
+    animation: breathe 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes breathe {
+  50% {
+    opacity: 0.55;
+  }
+}

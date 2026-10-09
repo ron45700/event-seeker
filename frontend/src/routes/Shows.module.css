@@ -1,0 +1,52 @@
+.content {
+  padding-inline: var(--gutter);
+}
+
+.loading {
+  padding-top: 16px;
+}
+
+.month + .month {
+  margin-top: 8px;
+}
+
+/* Month headings are the page's rhythm: a gig calendar set in poster type. They stick
+   under the filter bar so the month stays known while scrolling. */
+.monthHeading {
+  position: sticky;
+  top: calc(var(--stick-top) + var(--filterbar-h, 62px));
+  z-index: 10;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-inline: calc(-1 * var(--gutter));
+  padding: 10px var(--gutter) 6px;
+  background: var(--night);
+}
+
+.monthName {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 3rem;
+  line-height: 0.9;
+  padding-top: 0.12em;
+}
+
+@media (min-width: 600px) {
+  .monthName {
+    font-size: 3.75rem;
+  }
+}
+
+.monthYear {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  line-height: 1;
+  color: var(--fog);
+}
+
+.monthCount {
+  margin-inline-start: auto;
+  font-size: 0.875rem;
+  color: var(--fog);
+}

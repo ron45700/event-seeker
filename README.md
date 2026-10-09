@@ -27,6 +27,24 @@ Email is off by default. To turn it on: copy `.env.example` to `.env`, fill in
 While the switch is off, alerts wait in the queue and are sent once it is turned on.
 Alerts for shows that already took place are never sent.
 
+## Frontend
+
+The UI source is in `frontend/` (React, TypeScript, Vite). It builds to `web/`, which the
+server serves at `/`. Restart `serve` after the first build: `web/` is mounted only if it
+exists when the server starts.
+
+```
+cd frontend
+npm install
+npm run dev      # http://localhost:5173, /api proxied to http://localhost:8765
+npm test         # unit tests for formatting, search and venue colours
+npm run build    # type-check, then write the static build to ../web
+```
+
+`API_TARGET=http://host:port npm run dev` points the dev proxy at another backend.
+Venue badge colours come from the venue name; fixed hues for known venues are in
+`frontend/src/lib/venueColor.ts`. Card image URLs are built in `frontend/src/lib/images.ts`.
+
 ## Layout
 
 | File | Role |

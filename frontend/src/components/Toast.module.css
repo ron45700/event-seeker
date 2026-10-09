@@ -1,0 +1,54 @@
+.region {
+  position: fixed;
+  inset-inline: var(--gutter);
+  bottom: calc(var(--tabbar-space) + 16px);
+  z-index: 40;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+@media (min-width: 600px) {
+  .region {
+    bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 480px;
+  width: 100%;
+  min-height: 52px;
+  padding: 6px;
+  padding-inline-start: 16px;
+  background: var(--paper);
+  color: var(--night);
+  border-radius: var(--radius-control);
+  animation: rise 180ms ease-out;
+}
+
+.message {
+  flex: 1;
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.action {
+  min-height: var(--tap);
+  padding-inline: 14px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--night);
+  color: var(--sodium);
+  font-weight: 600;
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+}

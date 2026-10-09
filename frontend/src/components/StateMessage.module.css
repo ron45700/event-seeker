@@ -1,0 +1,52 @@
+.message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-width: 44ch;
+  margin: 56px auto;
+  padding-inline: var(--gutter);
+  text-align: center;
+}
+
+.message[data-compact] {
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  text-align: start;
+  max-width: none;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2.5rem;
+  line-height: 1;
+  padding-top: 0.1em;
+  text-wrap: balance;
+}
+
+.message[data-compact] .title {
+  font-size: 1.75rem;
+}
+
+.body {
+  color: var(--fog);
+  text-wrap: pretty;
+}
+
+.action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap);
+  margin-top: 8px;
+  padding-inline: 20px;
+  border: 0;
+  border-radius: var(--radius-control);
+  background: var(--sodium);
+  color: var(--sodium-ink);
+  font-weight: 600;
+  text-decoration: none;
+}
