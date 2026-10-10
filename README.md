@@ -77,7 +77,7 @@ The layout adapts to phones, iPads and desktops. The dark and light themes are s
 and both are tested for WCAG contrast.
 
 <p>
-  <img src="docs/screenshots/mobile.png" alt="The events page on a phone" width="320">
+  <img src="docs/screenshots/mobile.jpeg" alt="The events page on a phone" width="320">
 </p>
 
 ![The events page in the light theme](docs/screenshots/home-light.png)
@@ -167,33 +167,33 @@ because event times are stored as Israel local time.
 Settings are read from environment variables, or from a `.env` file in the project root (copy
 `.env.example`; `.env` is git-ignored).
 
-| Variable | Default | Description |
-|---|---|---|
-| `DB_PATH` | `data/event_seeker.db` | SQLite database. The thumbnail cache sits next to it in `thumbs/` |
-| `FETCH_INTERVAL_MINUTES` | `60` | Minutes between background fetch runs |
-| `HOST` | `0.0.0.0` | Address the server listens on |
-| `PORT` | `8765` | Port the server listens on |
-| `THUMB_WIDTH` | `480` | Width in pixels of the cached card thumbnails |
-| `EMAIL_ENABLED` | `false` | Global switch for alert emails. While off, alerts wait in the queue |
-| `SMTP_HOST` | `smtp.gmail.com` | SMTP server |
-| `SMTP_PORT` | `587` | SMTP port |
-| `SMTP_USER` | empty | Sender account |
-| `SMTP_PASSWORD` | empty | A Gmail App Password, not the regular account password |
-| `TELEGRAM_BOT_TOKEN` | empty | Operator alerts: the bot token from @BotFather. Leave empty to turn them off |
-| `TELEGRAM_CHAT_ID` | empty | Operator alerts: the chat to message. Send the bot a message, then open `https://api.telegram.org/bot<TOKEN>/getUpdates` and take `message.chat.id` |
-| `SOURCE_ALERT_AFTER_FAILURES` | `3` | Failed runs in a row before a source counts as broken |
-| `ADMIN_PASSWORD` | empty | Turns on the admin panel. Empty: every `/api/admin/*` route answers 404 |
-| `ADMIN_EMAIL` | empty | Optional: show the admin entry in the account menu only to this email (cosmetic) |
+| Variable                      | Default                | Description                                                                                                                                         |
+| ----------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DB_PATH`                     | `data/event_seeker.db` | SQLite database. The thumbnail cache sits next to it in `thumbs/`                                                                                   |
+| `FETCH_INTERVAL_MINUTES`      | `60`                   | Minutes between background fetch runs                                                                                                               |
+| `HOST`                        | `0.0.0.0`              | Address the server listens on                                                                                                                       |
+| `PORT`                        | `8765`                 | Port the server listens on                                                                                                                          |
+| `THUMB_WIDTH`                 | `480`                  | Width in pixels of the cached card thumbnails                                                                                                       |
+| `EMAIL_ENABLED`               | `false`                | Global switch for alert emails. While off, alerts wait in the queue                                                                                 |
+| `SMTP_HOST`                   | `smtp.gmail.com`       | SMTP server                                                                                                                                         |
+| `SMTP_PORT`                   | `587`                  | SMTP port                                                                                                                                           |
+| `SMTP_USER`                   | empty                  | Sender account                                                                                                                                      |
+| `SMTP_PASSWORD`               | empty                  | A Gmail App Password, not the regular account password                                                                                              |
+| `TELEGRAM_BOT_TOKEN`          | empty                  | Operator alerts: the bot token from @BotFather. Leave empty to turn them off                                                                        |
+| `TELEGRAM_CHAT_ID`            | empty                  | Operator alerts: the chat to message. Send the bot a message, then open `https://api.telegram.org/bot<TOKEN>/getUpdates` and take `message.chat.id` |
+| `SOURCE_ALERT_AFTER_FAILURES` | `3`                    | Failed runs in a row before a source counts as broken                                                                                               |
+| `ADMIN_PASSWORD`              | empty                  | Turns on the admin panel. Empty: every `/api/admin/*` route answers 404                                                                             |
+| `ADMIN_EMAIL`                 | empty                  | Optional: show the admin entry in the account menu only to this email (cosmetic)                                                                    |
 
 ## Sources
 
-| Source | Venues | How | Availability |
-|---|---|---|---|
-| `barby` | Barby | JSON API | sold out + tickets left |
-| `reading3` | Reading 3 | HTML listing page | not exposed |
-| `zappa` | Zappa Amphi Shuni, Tel Aviv, Herzliya | HTML venue pages with JSON-LD, paginated | available / not available |
-| `kupat` | Menora Mivtachim Arena, Amphi Tel Aviv (Kupat Tel Aviv) | JSON API, one request per venue | sold out / available |
-| `comy` | Stand-up shows nationwide (Comy) | JSON search call, one request | sold out / available |
+| Source     | Venues                                                  | How                                      | Availability              |
+| ---------- | ------------------------------------------------------- | ---------------------------------------- | ------------------------- |
+| `barby`    | Barby                                                   | JSON API                                 | sold out + tickets left   |
+| `reading3` | Reading 3                                               | HTML listing page                        | not exposed               |
+| `zappa`    | Zappa Amphi Shuni, Tel Aviv, Herzliya                   | HTML venue pages with JSON-LD, paginated | available / not available |
+| `kupat`    | Menora Mivtachim Arena, Amphi Tel Aviv (Kupat Tel Aviv) | JSON API, one request per venue          | sold out / available      |
+| `comy`     | Stand-up shows nationwide (Comy)                        | JSON search call, one request            | sold out / available      |
 
 ## Adding a source
 
@@ -215,11 +215,11 @@ stored events and subscriptions are rewritten on the next start.
 Every run records, per source, whether it worked. A run that raised an error or returned no
 events at all is a failure (a site that changed its markup usually parses to nothing).
 
-| Endpoint | Answers |
-|---|---|
-| `/health` | 200 while the server and database work. `status` is `ok` or `degraded`, with the details of every source |
-| `/health/sources` | 200, or 503 when any source is unhealthy |
-| `/health/sources/{name}` | The same for one source (`barby`, `reading3`, `zappa`, `kupat`, `comy`) |
+| Endpoint                 | Answers                                                                                                  |
+| ------------------------ | -------------------------------------------------------------------------------------------------------- |
+| `/health`                | 200 while the server and database work. `status` is `ok` or `degraded`, with the details of every source |
+| `/health/sources`        | 200, or 503 when any source is unhealthy                                                                 |
+| `/health/sources/{name}` | The same for one source (`barby`, `reading3`, `zappa`, `kupat`, `comy`)                                  |
 
 A source is unhealthy after `SOURCE_ALERT_AFTER_FAILURES` failed runs in a row (default 3), or
 when it was not attempted for more than two fetch intervals (the background run stopped). The two
@@ -246,25 +246,25 @@ route answers 404.
 
 ## Project layout
 
-| Path | Role |
-|---|---|
-| `app/models.py` | `Event`, the unified format for all sources |
-| `app/sources/` | One source per site. `base.py` is the base class, `__init__.py` is the list of active sources |
-| `app/db.py` | SQLite: users, subscriptions, events, notifications |
-| `app/matching.py` | Matching a subscription against an event |
-| `app/venues.py` | One display name per venue, whatever spelling a site uses |
-| `app/pipeline.py` | One run: fetch, detect new events, match, send |
-| `app/notifier.py` | Sending the alert emails |
-| `app/alerts.py` | Operator alerts (Telegram) |
-| `app/api.py` | The site API and the scheduled background run |
-| `app/admin.py` | Admin sessions and the lockout after wrong passwords |
-| `app/main.py` | Command line |
-| `frontend/` | The UI source (React, TypeScript, Vite) |
-| `web/` | Built UI files, served at `/` |
-| `tests/` | Backend tests, with sample responses from each site in `tests/fixtures/` |
-| `docs/UI_BRIEF.md` | Brief for building the UI, including the API contract |
-| `docs/MANUAL_TESTS.md` | Checklist for what the automated tests cannot cover: real sites, email, devices |
-| `docs/brand/` | The icon, a standalone copy for dashboards, and how to regenerate the PNGs |
+| Path                   | Role                                                                                          |
+| ---------------------- | --------------------------------------------------------------------------------------------- |
+| `app/models.py`        | `Event`, the unified format for all sources                                                   |
+| `app/sources/`         | One source per site. `base.py` is the base class, `__init__.py` is the list of active sources |
+| `app/db.py`            | SQLite: users, subscriptions, events, notifications                                           |
+| `app/matching.py`      | Matching a subscription against an event                                                      |
+| `app/venues.py`        | One display name per venue, whatever spelling a site uses                                     |
+| `app/pipeline.py`      | One run: fetch, detect new events, match, send                                                |
+| `app/notifier.py`      | Sending the alert emails                                                                      |
+| `app/alerts.py`        | Operator alerts (Telegram)                                                                    |
+| `app/api.py`           | The site API and the scheduled background run                                                 |
+| `app/admin.py`         | Admin sessions and the lockout after wrong passwords                                          |
+| `app/main.py`          | Command line                                                                                  |
+| `frontend/`            | The UI source (React, TypeScript, Vite)                                                       |
+| `web/`                 | Built UI files, served at `/`                                                                 |
+| `tests/`               | Backend tests, with sample responses from each site in `tests/fixtures/`                      |
+| `docs/UI_BRIEF.md`     | Brief for building the UI, including the API contract                                         |
+| `docs/MANUAL_TESTS.md` | Checklist for what the automated tests cannot cover: real sites, email, devices               |
+| `docs/brand/`          | The icon, a standalone copy for dashboards, and how to regenerate the PNGs                    |
 
 ## Development and tests
 
