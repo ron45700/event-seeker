@@ -2,7 +2,10 @@
 import logging
 from abc import ABC, abstractmethod
 
+from urllib.parse import urlsplit
+
 import httpx
+from curl_cffi import requests as browser_requests
 
 from app.models import Event
 
@@ -17,6 +20,11 @@ DEFAULT_HEADERS = {
     "Accept": "application/json, text/html;q=0.9, */*;q=0.8",
     "Accept-Language": "he-IL,he;q=0.9,en;q=0.8",
 }
+
+# Sites whose bot protection inspects the TLS handshake and never answers a client that does
+# not look like a browser (Zappa: plain httpx works from Windows but times out from the Linux
+# image). Requests to these hosts go through curl_cffi, which reproduces Chrome's handshake.
+BROWSER_TLS_HOSTS = {"www.zappa-club.co.il"}
 
 
 class Source(ABC):
@@ -44,7 +52,14 @@ class Source(ABC):
         return events
 
     @staticmethod
-    def _get(url: str, headers: dict | None = None) -> httpx.Response:
+    def _get(url: str, headers: dict | None = None):
+        if urlsplit(url).hostname in BROWSER_TLS_HOSTS:
+            # curl_cffi sends Chrome's own headers; ours are added only where the caller asks
+            response = browser_requests.get(
+                url, headers=headers or {}, impersonate="chrome", timeout=30, allow_redirects=True
+            )
+            response.raise_for_status()
+            return response
         response = httpx.get(
             url, headers={**DEFAULT_HEADERS, **(headers or {})}, timeout=30, follow_redirects=True
         )
