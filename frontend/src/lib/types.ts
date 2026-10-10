@@ -37,6 +37,18 @@ export interface Me {
   email: string
   paused: boolean
   theme: Theme
+  /** Offer the admin entry in the account menu. Cosmetic: the panel asks for its password. */
+  show_admin: boolean
+}
+
+/** A registered user as the admin panel lists it. */
+export interface AdminUser {
+  id: number
+  email: string
+  /** UTC, ISO 8601 with a Z. */
+  created_at: string
+  paused: boolean
+  subscriptions: Subscription[]
 }
 
 export interface Subscription {

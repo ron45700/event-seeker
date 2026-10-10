@@ -257,9 +257,14 @@
   font-weight: 500;
 }
 
+/* A button or a link (the admin entry); both look the same. */
 .menuAction {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   min-height: var(--tap);
   margin-top: 10px;
+  text-decoration: none;
   border: 1px solid var(--line);
   border-radius: var(--radius-control);
   background: transparent;

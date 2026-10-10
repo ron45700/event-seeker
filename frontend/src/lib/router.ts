@@ -5,7 +5,7 @@ import { NO_FILTERS, type ShowFilters } from './search'
 // Hash routes, because the backend's StaticFiles mount has no fallback to index.html
 // for unknown paths: /artists would be a 404, #/artists is not.
 
-export type RouteName = 'shows' | 'artists' | 'signin'
+export type RouteName = 'shows' | 'artists' | 'signin' | 'admin'
 
 export interface Route {
   name: RouteName
@@ -23,6 +23,7 @@ const PATHS: Record<RouteName, string> = {
   shows: '#/',
   artists: '#/artists',
   signin: '#/signin',
+  admin: '#/admin',
 }
 
 export function parseHash(hash: string): Route {
@@ -30,7 +31,13 @@ export function parseHash(hash: string): Route {
   const path = cut === -1 ? hash : hash.slice(0, cut)
   const params = new URLSearchParams(cut === -1 ? '' : hash.slice(cut + 1))
   const name: RouteName =
-    path === PATHS.artists ? 'artists' : path === PATHS.signin ? 'signin' : 'shows'
+    path === PATHS.artists
+      ? 'artists'
+      : path === PATHS.signin
+        ? 'signin'
+        : path === PATHS.admin
+          ? 'admin'
+          : 'shows'
   const follow = params.get('follow')
   const next = params.get('next')
   return {

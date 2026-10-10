@@ -32,7 +32,7 @@ export function NavBar({ route, showsLink, query, onQueryChange }: Props) {
       <div className={styles.inner}>
         <div className={styles.actions}>
           {me ? (
-            <UserMenu email={me.email} />
+            <UserMenu email={me.email} showAdmin={me.show_admin} />
           ) : (
             // The sign-in and My artists screens carry their own sign-in action.
             ready &&
@@ -80,8 +80,8 @@ function ThemeToggle() {
   )
 }
 
-/** The signed-in control: the first letter of the email, opening a menu with sign-out. */
-function UserMenu({ email }: { email: string }) {
+/** The signed-in control: the first letter of the email, opening a menu with sign-out (and the admin panel, when offered). */
+function UserMenu({ email, showAdmin }: { email: string; showAdmin: boolean }) {
   const { signOut } = useSession()
   const [open, setOpen] = useState(false)
   const rootRef = useRef<HTMLDivElement>(null)
@@ -129,6 +129,11 @@ function UserMenu({ email }: { email: string }) {
           <bdi dir="ltr" className={styles.menuEmail}>
             {email}
           </bdi>
+          {showAdmin && (
+            <a href={hrefFor('admin')} className={styles.menuAction} onClick={() => setOpen(false)}>
+              ניהול
+            </a>
+          )}
           <button
             type="button"
             className={styles.menuAction}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { eventCount, formatPrice, groupByMonth, parseLocal, shortDate, timeOfDay, weekday } from './format'
+import { eventCount, formatPrice, groupByMonth, israelDate, parseLocal, shortDate, timeOfDay, weekday } from './format'
 
 describe('parseLocal', () => {
   it('reads the wall-clock time without timezone conversion', () => {
@@ -53,5 +53,14 @@ describe('eventCount', () => {
   it('uses the singular form for one', () => {
     expect(eventCount(1)).toBe('אירוע אחד')
     expect(eventCount(12)).toBe('12 אירועים')
+  })
+})
+
+describe('israelDate', () => {
+  it('shows a UTC timestamp as the date in Israel', () => {
+    // 22:30 UTC on 10 Oct is already 11 Oct in Israel.
+    expect(israelDate('2026-10-10T22:30:00Z')).toBe(israelDate('2026-10-11T08:00:00Z'))
+    expect(israelDate('2026-10-10T22:30:00Z')).toContain('11')
+    expect(israelDate('nonsense')).toBe('')
   })
 })

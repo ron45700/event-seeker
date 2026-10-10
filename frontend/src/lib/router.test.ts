@@ -8,6 +8,7 @@ describe('parseHash', () => {
     expect(parseHash('#/').name).toBe('shows')
     expect(parseHash('#/artists').name).toBe('artists')
     expect(parseHash('#/signin?next=%23%2F').name).toBe('signin')
+    expect(parseHash('#/admin').name).toBe('admin')
     expect(parseHash('#/nowhere').name).toBe('shows')
   })
 

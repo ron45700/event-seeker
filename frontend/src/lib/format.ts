@@ -91,3 +91,16 @@ export function groupByMonth<T extends { starts_at: string }>(items: T[]): Month
 export function eventCount(n: number): string {
   return n === 1 ? 'אירוע אחד' : `${n} אירועים`
 }
+
+const ISRAEL_DATE = new Intl.DateTimeFormat('he-IL', {
+  timeZone: 'Asia/Jerusalem',
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+})
+
+/** A UTC timestamp from the server ("2026-10-10T09:30:00Z") as an Israel date: "10 באוק׳ 2026". */
+export function israelDate(utc: string): string {
+  const date = new Date(utc)
+  return Number.isNaN(date.getTime()) ? '' : ISRAEL_DATE.format(date)
+}

@@ -73,13 +73,20 @@ Full interactive docs at `http://localhost:8765/docs` while the server is runnin
 |---|---|---|
 | POST | `/api/login` | Body: `{email, create?}`. Returns `{email, paused, theme}` and sets a cookie. An unknown email is 404 `not registered` unless `create: true` (the user confirms the address first) |
 | POST | `/api/logout` | |
-| GET | `/api/me` | `{email, paused, theme}`, or 401 when not signed in |
+| GET | `/api/me` | `{email, paused, theme, show_admin}`, or 401 when not signed in. `show_admin`: offer the admin entry in the account menu (cosmetic) |
 | PATCH | `/api/me` | Body: `{paused?: bool, theme?: "dark" \| "light"}`. Only the fields sent change |
 | GET | `/api/subscriptions` | `[{id, artist, venue}]`. `venue: null` = any venue |
 | POST | `/api/subscriptions` | Body: `{artist, venues: []}`; empty = any venue, which replaces the artist's venue-specific rows. One row is stored per venue. Returns the updated list |
 | DELETE | `/api/subscriptions/{id}` | 204 |
 | GET | `/api/events` | Query: `q`, `venue`, `category`, `mine`. Upcoming events ordered by date |
 | GET | `/api/venues` | `[{venue, city}]` for the filter and the subscription venue picker |
+| POST | `/api/admin/login` | Body: `{password}`. Starts an admin session (httponly cookie, path `/api/admin`, 4 hours). 401 wrong password; 429 with `Retry-After` (seconds) after five wrong ones in a row |
+| POST | `/api/admin/logout` | Ends the admin session |
+| GET | `/api/admin/users` | `[{id, email, created_at, paused, subscriptions: [{id, artist, venue}]}]`, newest first. `created_at` is UTC (`...Z`) |
+| DELETE | `/api/admin/users/{id}` | Deletes the user with its subscriptions and alerts. Returns `{email, signed_out}`; `signed_out` when it was the user signed in on this browser, whose sign-in is cleared too |
+
+Every `/api/admin/*` route answers 404 while `ADMIN_PASSWORD` is empty, and 401 without an admin
+session. Admin rights come only from that session, never from the user cookie.
 
 Sample event:
 

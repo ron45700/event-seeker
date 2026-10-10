@@ -4,6 +4,7 @@ import { NavBar, TabBar } from './components/NavBar'
 import { categoryFromParam } from './lib/categories'
 import { navigate, replaceRoute, showsHref, useRoute } from './lib/router'
 import { sameFilters, type ShowFilters } from './lib/search'
+import { Admin } from './routes/Admin'
 import { MyArtists } from './routes/MyArtists'
 import { Shows } from './routes/Shows'
 import { SignIn } from './routes/SignIn'
@@ -47,6 +48,7 @@ export function App() {
         {onShows && <Shows route={route} filters={filters} onFiltersChange={changeFilters} />}
         {route.name === 'artists' && <MyArtists />}
         {route.name === 'signin' && <SignIn />}
+        {route.name === 'admin' && <Admin />}
       </main>
       <TabBar route={route} showsLink={showsHref(null, filters)} />
     </div>

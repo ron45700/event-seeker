@@ -1,13 +1,16 @@
-import type { Me, ShowEvent, Subscription, Venue } from './types'
+import type { AdminUser, Me, ShowEvent, Subscription, Venue } from './types'
 
 /** An API failure. status 0 means the request never reached the server. */
 export class ApiError extends Error {
   readonly status: number
+  /** Seconds from a Retry-After header (e.g. an admin lockout), when the server sent one. */
+  readonly retryAfter: number | null
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, retryAfter: number | null = null) {
     super(message)
     this.name = 'ApiError'
     this.status = status
+    this.retryAfter = retryAfter
   }
 }
 
@@ -34,7 +37,12 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       .json()
       .then((body) => body?.detail)
       .catch(() => undefined)
-    throw new ApiError(response.status, typeof detail === 'string' ? detail : response.statusText)
+    const retryAfter = Number(response.headers.get('Retry-After'))
+    throw new ApiError(
+      response.status,
+      typeof detail === 'string' ? detail : response.statusText,
+      Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : null,
+    )
   }
   if (response.status === 204) return undefined as T
   return (await response.json()) as T
@@ -97,4 +105,19 @@ export const api = {
   },
 
   venues: () => request<Venue[]>('/api/venues'),
+
+  // Admin. The session lives in an httponly cookie the server sets; the password is only
+  // sent here and never kept. 404 means the feature is off, 401 that there is no session.
+
+  /** 401 for a wrong password, 429 (with retryAfter) while locked out. */
+  adminLogin: (password: string) =>
+    request<{ ok: boolean }>('/api/admin/login', { method: 'POST', body: jsonBody({ password }) }),
+
+  adminLogout: () => request<{ ok: boolean }>('/api/admin/logout', { method: 'POST' }),
+
+  adminUsers: () => request<AdminUser[]>('/api/admin/users'),
+
+  /** signed_out: it was the user signed in on this browser, now signed out. */
+  adminDeleteUser: (id: number) =>
+    request<{ email: string; signed_out: boolean }>(`/api/admin/users/${id}`, { method: 'DELETE' }),
 }

@@ -230,6 +230,34 @@ def delete_subscription(conn: sqlite3.Connection, user_id: int, subscription_id:
     return cur.rowcount > 0
 
 
+def list_users_with_subscriptions(conn: sqlite3.Connection) -> list[dict]:
+    """Every user, newest first, each with its subscriptions (for the admin panel)."""
+    users = conn.execute(
+        "SELECT id, email, created_at, paused FROM users ORDER BY created_at DESC, id DESC"
+    ).fetchall()
+    subs: dict[int, list[dict]] = {}
+    for row in conn.execute("SELECT id, user_id, artist, venue FROM subscriptions ORDER BY artist, venue"):
+        subs.setdefault(row["user_id"], []).append(
+            {"id": row["id"], "artist": row["artist"], "venue": row["venue"]}
+        )
+    return [
+        {"id": u["id"], "email": u["email"], "created_at": u["created_at"],
+         "paused": bool(u["paused"]), "subscriptions": subs.get(u["id"], [])}
+        for u in users
+    ]
+
+
+def delete_user(conn: sqlite3.Connection, user_id: int) -> str | None:
+    """Delete a user; subscriptions and notifications go with it (ON DELETE CASCADE).
+    Returns the deleted email, or None when there was no such user."""
+    row = conn.execute("SELECT email FROM users WHERE id = ?", (user_id,)).fetchone()
+    if row is None:
+        return None
+    conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    conn.commit()
+    return row["email"]
+
+
 def get_user(conn: sqlite3.Connection, email: str) -> sqlite3.Row | None:
     return conn.execute(
         "SELECT id, email, paused, theme FROM users WHERE email = ?", (email.strip().lower(),)

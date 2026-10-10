@@ -3,15 +3,20 @@ from datetime import datetime
 import pytest
 from fastapi.testclient import TestClient
 
-from app import db
+from app import config, db
+from app.admin import AdminAuth
 from app.api import app
 from app.models import Event
 
 
 @pytest.fixture
-def client(tmp_path):
+def client(tmp_path, monkeypatch):
     app.state.run_scheduler = False
     app.state.db_path = tmp_path / "test.db"
+    # The admin feature is off unless a test turns it on; a real .env must not leak in.
+    monkeypatch.setattr(config, "ADMIN_PASSWORD", "")
+    monkeypatch.setattr(config, "ADMIN_EMAIL", "")
+    app.state.admin = AdminAuth()
     conn = db.connect(app.state.db_path)
     for i, (title, venue) in enumerate([("טונה", "בארבי"), ("מוניקה סקס", "רידינג 3")]):
         db.upsert_event(conn, Event("s", str(i), title, datetime(2099, 1, i + 1, 21), venue, "תל אביב", "u"))
@@ -44,7 +49,7 @@ def test_unknown_email_needs_confirmation_before_a_profile_is_created(client):
 
 def test_login_subscribe_and_delete(client):
     assert client.post("/api/login", json={"email": "Ron@Example.com", "create": True}).json() == {
-        "email": "ron@example.com", "paused": False, "theme": "dark"}
+        "email": "ron@example.com", "paused": False, "theme": "dark", "show_admin": False}
     subs = client.post("/api/subscriptions", json={"artist": "טונה", "venue": "בארבי"}).json()
     client.post("/api/subscriptions", json={"artist": "טונה", "venue": "בארבי"})  # duplicate
     assert client.get("/api/subscriptions").json() == [{"id": subs[0]["id"], "artist": "טונה", "venue": "בארבי"}]
@@ -131,7 +136,7 @@ def test_theme_is_saved_per_user_without_touching_pause(client):
     client.post("/api/login", json={"email": "a@example.com", "create": True})
     client.patch("/api/me", json={"paused": True})
     assert client.patch("/api/me", json={"theme": "light"}).json() == {
-        "email": "a@example.com", "paused": True, "theme": "light"}
+        "email": "a@example.com", "paused": True, "theme": "light", "show_admin": False}
     assert client.patch("/api/me", json={"theme": "pink"}).status_code == 422
     client.post("/api/login", json={"email": "b@example.com", "create": True})
     assert client.get("/api/me").json()["theme"] == "dark"
@@ -196,3 +201,131 @@ def test_venue_spellings_are_listed_once_and_old_subscriptions_are_rewritten(cli
     from app.matching import matches
     events = {e.venue: e for _, e in db.upcoming_events(conn)}
     assert all(matches(events[sub["venue"]], "x", sub["venue"]) for sub in subs)
+
+
+ADMIN_PASSWORD = "correct horse battery staple"
+
+
+@pytest.fixture
+def admin(client, monkeypatch):
+    """The admin feature on, with a clock the lockout and expiry tests can move."""
+    monkeypatch.setattr(config, "ADMIN_PASSWORD", ADMIN_PASSWORD)
+    clock = {"now": 1000.0}
+    app.state.admin = AdminAuth(clock=lambda: clock["now"])
+    return clock
+
+
+def _signup(client, email):
+    return client.post("/api/login", json={"email": email, "create": True})
+
+
+def test_admin_is_disabled_without_a_password(client):
+    assert client.post("/api/admin/login", json={"password": ""}).status_code == 404
+    assert client.post("/api/admin/login", json={"password": "anything"}).status_code == 404
+    assert client.post("/api/admin/logout").status_code == 404
+    assert client.get("/api/admin/users").status_code == 404
+    assert client.delete("/api/admin/users/1").status_code == 404
+    _signup(client, "a@example.com")
+    assert client.get("/api/me").json()["show_admin"] is False
+
+
+def test_admin_routes_need_an_admin_session(admin, client):
+    assert client.get("/api/admin/users").status_code == 401
+    assert client.delete("/api/admin/users/1").status_code == 401
+    # The user cookie grants nothing, even for the admin's own email.
+    _signup(client, "admin@example.com")
+    assert client.get("/api/admin/users").status_code == 401
+    client.cookies.set("es_admin", "forged-token", path="/api/admin")
+    assert client.get("/api/admin/users").status_code == 401
+
+
+def test_wrong_password_is_rejected_and_never_echoed(admin, client, caplog):
+    response = client.post("/api/admin/login", json={"password": "guess"})
+    assert (response.status_code, response.json()) == (401, {"detail": "wrong password"})
+    assert "es_admin" not in response.cookies
+    for bad in [{}, {"password": 123}, {"password": [ADMIN_PASSWORD]}]:
+        response = client.post("/api/admin/login", json=bad)
+        assert response.status_code == 422 and ADMIN_PASSWORD not in response.text
+    response = client.post("/api/admin/login", content=b"password=" + ADMIN_PASSWORD.encode())
+    assert response.status_code == 422 and ADMIN_PASSWORD not in response.text
+    assert "admin login failed" in caplog.text
+    assert "guess" not in caplog.text and ADMIN_PASSWORD not in caplog.text
+
+
+def test_lockout_after_five_wrong_passwords(admin, client):
+    for _ in range(4):
+        assert client.post("/api/admin/login", json={"password": "nope"}).status_code == 401
+    locked = client.post("/api/admin/login", json={"password": "nope"})
+    assert locked.status_code == 429 and int(locked.headers["retry-after"]) == 300
+    # Locked even for the right password, so the lockout cannot be used to test guesses.
+    right = client.post("/api/admin/login", json={"password": ADMIN_PASSWORD})
+    assert right.status_code == 429 and ADMIN_PASSWORD not in right.text
+    admin["now"] += 301
+    assert client.post("/api/admin/login", json={"password": ADMIN_PASSWORD}).status_code == 200
+
+
+def test_admin_session_lists_users_and_ends(admin, client):
+    for email in ["old@example.com", "new@example.com"]:
+        _signup(client, email)
+    client.post("/api/subscriptions", json={"artist": "טונה", "venues": ["בארבי", "רידינג 3"]})
+    client.post("/api/logout")
+    conn = db.connect(app.state.db_path)
+    conn.execute("UPDATE users SET created_at = '2026-01-01 10:00:00' WHERE email = 'old@example.com'")
+    conn.commit()
+
+    login = client.post("/api/admin/login", json={"password": ADMIN_PASSWORD})
+    assert login.status_code == 200 and login.json() == {"ok": True}
+    assert ADMIN_PASSWORD not in login.text and ADMIN_PASSWORD not in str(login.headers)
+    cookie = login.headers["set-cookie"].lower()
+    assert "httponly" in cookie and "samesite=lax" in cookie and "path=/api/admin" in cookie
+
+    users = client.get("/api/admin/users").json()
+    assert [u["email"] for u in users] == ["new@example.com", "old@example.com"]  # newest first
+    assert users[1]["created_at"] == "2026-01-01T10:00:00Z" and users[1]["paused"] is False
+    assert sorted((s["artist"], s["venue"]) for s in users[0]["subscriptions"]) == [
+        ("טונה", "בארבי"), ("טונה", "רידינג 3")]
+    assert users[1]["subscriptions"] == []
+
+    assert client.post("/api/admin/logout").status_code == 200
+    assert client.get("/api/admin/users").status_code == 401
+
+
+def test_admin_session_expires(admin, client):
+    client.post("/api/admin/login", json={"password": ADMIN_PASSWORD})
+    assert client.get("/api/admin/users").status_code == 200
+    admin["now"] += 4 * 60 * 60 + 1
+    assert client.get("/api/admin/users").status_code == 401
+
+
+def test_admin_deletes_a_user_with_its_subscriptions_and_alerts(admin, client):
+    _signup(client, "gone@example.com")
+    client.post("/api/subscriptions", json={"artist": "טונה"})
+    _signup(client, "me@example.com")  # the user signed in on this browser
+    conn = db.connect(app.state.db_path)
+    gone = db.get_user(conn, "gone@example.com")["id"]
+    event_id = conn.execute("SELECT id FROM events LIMIT 1").fetchone()["id"]
+    db.queue_notification(conn, gone, event_id)
+    conn.commit()
+    client.post("/api/admin/login", json={"password": ADMIN_PASSWORD})
+
+    response = client.delete(f"/api/admin/users/{gone}")
+    assert response.json() == {"email": "gone@example.com", "signed_out": False}
+    assert conn.execute("SELECT COUNT(*) FROM subscriptions WHERE user_id = ?", (gone,)).fetchone()[0] == 0
+    assert conn.execute("SELECT COUNT(*) FROM notifications WHERE user_id = ?", (gone,)).fetchone()[0] == 0
+    assert client.delete(f"/api/admin/users/{gone}").status_code == 404
+    assert client.get("/api/me").json()["email"] == "me@example.com"  # still signed in
+
+    # Deleting the user signed in on this browser signs it out.
+    me = db.get_user(conn, "me@example.com")["id"]
+    assert client.delete(f"/api/admin/users/{me}").json() == {"email": "me@example.com", "signed_out": True}
+    assert client.get("/api/me").status_code == 401
+    assert client.get("/api/admin/users").json() == []  # the admin session is separate
+
+
+def test_show_admin_follows_the_settings(admin, client, monkeypatch):
+    _signup(client, "someone@example.com")
+    assert client.get("/api/me").json()["show_admin"] is True  # no ADMIN_EMAIL: anyone signed in
+    monkeypatch.setattr(config, "ADMIN_EMAIL", "boss@example.com")
+    assert client.get("/api/me").json()["show_admin"] is False
+    _signup(client, "boss@example.com")
+    assert client.get("/api/me").json()["show_admin"] is True

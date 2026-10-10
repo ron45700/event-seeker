@@ -41,3 +41,12 @@ TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
 TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
 # A source counts as broken after this many failed runs in a row (one run per FETCH_INTERVAL_MINUTES)
 SOURCE_ALERT_AFTER_FAILURES = int(os.environ.get("SOURCE_ALERT_AFTER_FAILURES", "3"))
+
+# Admin panel (/#/admin, /api/admin/*). Empty ADMIN_PASSWORD turns the feature off entirely:
+# every admin route answers 404. The password is only ever compared on the server.
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
+if not ADMIN_PASSWORD.strip():
+    ADMIN_PASSWORD = ""
+# Optional: show the admin entry in the account menu only to this signed-in email. Cosmetic;
+# the password is the protection.
+ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "").strip().lower()

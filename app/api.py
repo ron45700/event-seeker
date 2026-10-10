@@ -15,6 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from app import config, db, thumbs
+from app.admin import SESSION_SECONDS, AdminAuth, Locked, WrongPassword
 from app.alerts import get_alerter
 from app.matching import contains_term, matches
 from app.notifier import get_notifier
@@ -25,6 +26,9 @@ from app.venues import venue_key
 log = logging.getLogger(__name__)
 
 COOKIE = "es_user"
+# The admin session cookie: a random token, sent only to the admin routes.
+ADMIN_COOKIE = "es_admin"
+ADMIN_PATH = "/api/admin"
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
@@ -58,6 +62,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="event_seeker", lifespan=lifespan)
 app.state.run_scheduler = True
 app.state.db_path = config.DB_PATH
+app.state.admin = AdminAuth()
 
 
 def get_conn(request: Request):
@@ -93,8 +98,19 @@ class MeBody(BaseModel):
     theme: Literal["dark", "light"] | None = None
 
 
+def _show_admin(email: str) -> bool:
+    """Whether the UI offers the admin entry to this user. Cosmetic: the panel itself still
+    asks for the password."""
+    return bool(config.ADMIN_PASSWORD) and (not config.ADMIN_EMAIL or email == config.ADMIN_EMAIL)
+
+
 def _me(user) -> dict:
-    return {"email": user["email"], "paused": bool(user["paused"]), "theme": user["theme"]}
+    return {
+        "email": user["email"],
+        "paused": bool(user["paused"]),
+        "theme": user["theme"],
+        "show_admin": _show_admin(user["email"]),
+    }
 
 
 @app.post("/api/login")
@@ -165,6 +181,83 @@ def add_subscription(body: SubscriptionBody, user=Depends(current_user), conn=De
 def delete_subscription(subscription_id: int, user=Depends(current_user), conn=Depends(get_conn)):
     if not db.delete_subscription(conn, user["id"], subscription_id):
         raise HTTPException(404, "subscription not found")
+
+
+# Admin. Rights come only from the admin session (ADMIN_COOKIE), never from the user cookie,
+# which is just an email and can be forged. With no ADMIN_PASSWORD every admin route is a 404.
+
+
+def admin_enabled() -> None:
+    if not config.ADMIN_PASSWORD:
+        raise HTTPException(404, "Not Found")
+
+
+def require_admin(request: Request, _=Depends(admin_enabled)) -> None:
+    if not request.app.state.admin.valid(request.cookies.get(ADMIN_COOKIE, "")):
+        raise HTTPException(401, "admin session required")
+
+
+@app.post(f"{ADMIN_PATH}/login", dependencies=[Depends(admin_enabled)])
+async def admin_login(request: Request, response: Response):
+    """Body {password}. Starts an admin session. 401 for a wrong password; 429 with
+    Retry-After (seconds) while locked out after repeated wrong passwords.
+
+    The body is read by hand so that no error response can echo the password back.
+    """
+    try:
+        body = await request.json()
+    except ValueError:
+        body = None
+    password = body.get("password") if isinstance(body, dict) else None
+    if not isinstance(password, str) or not password:
+        raise HTTPException(422, "password is required")
+    client = request.client.host if request.client else "unknown"
+    try:
+        token = request.app.state.admin.login(client, password)
+    except Locked as exc:
+        if exc.started:
+            log.warning("admin login failed from %s; locked out for %ds", client, exc.retry_after)
+        else:
+            log.warning("admin login refused from %s: locked out for %ds more", client, exc.retry_after)
+        raise HTTPException(429, "too many attempts", headers={"Retry-After": str(exc.retry_after)})
+    except WrongPassword as exc:
+        log.warning("admin login failed from %s (%d in a row)", client, exc.failures)
+        raise HTTPException(401, "wrong password")
+    log.info("admin signed in from %s", client)
+    response.set_cookie(
+        ADMIN_COOKIE, token, max_age=SESSION_SECONDS, httponly=True, samesite="lax", path=ADMIN_PATH
+    )
+    return {"ok": True}
+
+
+@app.post(f"{ADMIN_PATH}/logout", dependencies=[Depends(admin_enabled)])
+def admin_logout(request: Request, response: Response):
+    request.app.state.admin.logout(request.cookies.get(ADMIN_COOKIE, ""))
+    response.delete_cookie(ADMIN_COOKIE, path=ADMIN_PATH)
+    return {"ok": True}
+
+
+@app.get(f"{ADMIN_PATH}/users", dependencies=[Depends(require_admin)])
+def admin_users(conn=Depends(get_conn)):
+    """Registered users, newest first, each with its subscriptions. created_at is UTC."""
+    users = db.list_users_with_subscriptions(conn)
+    for user in users:
+        user["created_at"] = _utc(user["created_at"]).isoformat().replace("+00:00", "Z")
+    return users
+
+
+@app.delete(f"{ADMIN_PATH}/users/{{user_id}}", dependencies=[Depends(require_admin)])
+def admin_delete_user(user_id: int, request: Request, response: Response, conn=Depends(get_conn)):
+    """Delete a user with its subscriptions and alerts. When it is the user signed in on
+    this browser, that sign-in is cleared too (signed_out: true)."""
+    email = db.delete_user(conn, user_id)
+    if email is None:
+        raise HTTPException(404, "user not found")
+    signed_out = request.cookies.get(COOKIE, "").strip().lower() == email
+    if signed_out:
+        response.delete_cookie(COOKIE)
+    log.info("admin deleted user %s", email)
+    return {"email": email, "signed_out": signed_out}
 
 
 @app.get("/api/events")

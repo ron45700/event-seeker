@@ -141,7 +141,32 @@ if asked). These were only checked in Chrome's device emulation, so real Safari 
 - [ ] A show that just took place and that a site still lists does not come back on the next
       run (its id stays gone) and no alert goes out for it.
 
-## 7. Leave it running
+## 7. Admin panel
+
+Prepare: set a long random `ADMIN_PASSWORD` in `.env` and restart `serve`.
+
+- [ ] With `ADMIN_PASSWORD` empty (restart), `/api/admin/users` answers 404, `/#/admin` says the
+      panel is not enabled, and the account menu has no "ניהול".
+- [ ] With it set, the account menu shows "ניהול" above "יציאה". Set `ADMIN_EMAIL` to another
+      address and restart: the entry disappears for you, but `/#/admin` still works with the
+      password.
+- [ ] Open `/#/admin`: a password form. A wrong password says "הסיסמה שגויה." and clears the
+      field. The server log has a line "admin login failed from ..." without the password.
+- [ ] Five wrong passwords in a row: the form says the panel is locked and for how long. Even
+      the right password is refused until the time is up; then it works.
+- [ ] Signed in to the panel: the users, newest first, with sign-up date, paused alerts, and
+      followed artists with their venues. Search by part of an email or an artist name.
+- [ ] In the browser's dev tools: the `es_admin` cookie is HttpOnly with path `/api/admin`;
+      nothing about the password is in local storage, session storage or the page source.
+- [ ] Delete a test user: the dialog shows the exact email; "ביטול" keeps it, "מחיקת המשתמש"
+      removes it from the list. `python -m app.main list` no longer shows its subscriptions.
+- [ ] Delete the user you are signed in as on this browser: the dialog warns you, and after the
+      delete you are signed out (the account menu is gone), while the panel stays open.
+- [ ] "יציאה מהניהול" takes you to the events page; `/#/admin` asks for the password again.
+- [ ] Phone and iPad, both themes: the cards stack on a phone and sit side by side on iPad, the
+      dialog is a bottom sheet on a phone, and nothing scrolls sideways.
+
+## 8. Leave it running
 
 - [ ] Keep `serve` running for a few hours. `/health` shows `last_synced_at` advancing about
       once an hour for every source, and the log has no repeating errors.

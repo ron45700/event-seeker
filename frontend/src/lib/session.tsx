@@ -10,6 +10,8 @@ interface Session {
   /** Rejects with ApiError 404 for an unknown address unless `create` is set. */
   signIn(email: string, create?: boolean): Promise<void>
   signOut(): Promise<void>
+  /** Ask the server again who is signed in (e.g. after the admin deleted this user). */
+  refresh(): Promise<void>
   setPaused(paused: boolean): Promise<void>
   theme: Theme
   /** Applies at once; saved to the account when signed in, to this browser otherwise. */
@@ -51,6 +53,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     await api.logout()
     setMe(null)
   }, [])
+  const refresh = useCallback(async () => setMe(await api.me()), [])
   const setPaused = useCallback(async (paused: boolean) => setMe(await api.updateMe({ paused })), [])
 
   const signedIn = me !== null
@@ -70,8 +73,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   )
 
   const value = useMemo(
-    () => ({ me, ready, signIn, signOut, setPaused, theme, setTheme }),
-    [me, ready, signIn, signOut, setPaused, theme, setTheme],
+    () => ({ me, ready, signIn, signOut, refresh, setPaused, theme, setTheme }),
+    [me, ready, signIn, signOut, refresh, setPaused, theme, setTheme],
   )
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
 }
