@@ -59,7 +59,12 @@ export const api = {
     }
   },
 
-  login: (email: string) => request<Me>('/api/login', { method: 'POST', body: jsonBody({ email }) }),
+  /**
+   * Signs in a known address. An unknown one fails with status 404 unless `create` is set,
+   * so the user can confirm a new address (there is no verification email).
+   */
+  login: (email: string, create = false) =>
+    request<Me>('/api/login', { method: 'POST', body: jsonBody({ email, create }) }),
 
   logout: () => request<{ ok: boolean }>('/api/logout', { method: 'POST' }),
 
@@ -69,11 +74,14 @@ export const api = {
 
   subscriptions: () => request<Subscription[]>('/api/subscriptions'),
 
-  /** Returns the updated list. */
-  addSubscription: (artist: string, venue: string | null) =>
+  /**
+   * Follows an artist at these venues; an empty list is any venue, and replaces the
+   * artist's venue-specific rows. Returns the updated list.
+   */
+  addSubscription: (artist: string, venues: string[]) =>
     request<Subscription[]>('/api/subscriptions', {
       method: 'POST',
-      body: jsonBody({ artist, venue }),
+      body: jsonBody({ artist, venues }),
     }),
 
   deleteSubscription: (id: number) =>

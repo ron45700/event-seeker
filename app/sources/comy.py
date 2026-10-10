@@ -1,5 +1,4 @@
 import hashlib
-import re
 from datetime import datetime, timezone
 
 from app.models import Event
@@ -15,9 +14,6 @@ SEARCH_FORM = {
     "isWeekend": "false", "subIsNear": "false", "lat": "", "lng": "", "subIsAnywhere": "true",
     "subArea": "", "subCityText": "", "quickSearch": "false",
 }
-
-# venue names carry notes such as "- פתיחת דלתות 20:00" (doors open)
-_DOORS = re.compile(r"[\s\-–]*פתיחת דלתות.*$")
 
 
 class ComySource(Source):
@@ -45,7 +41,8 @@ class ComySource(Source):
             title=title,
             # the timestamp is Israel wall-clock time encoded as if it were UTC
             starts_at=datetime.fromtimestamp(timestamp, timezone.utc).replace(tzinfo=None),
-            venue=_DOORS.sub("", str(item["placeName"])).strip(),
+            # notes such as "- פתיחת דלתות 20:00" (doors open) are stripped in app/venues.py
+            venue=str(item["placeName"]).strip(),
             city="",  # not exposed; the town is usually part of the venue name
             url=link if link.startswith("https://") else BASE_URL,
             category="standup",

@@ -5,6 +5,7 @@ from datetime import datetime
 from pathlib import Path
 
 from app.models import Event
+from app.venues import canonical_venue, preferred_spellings, venue_key
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
@@ -119,9 +120,10 @@ def row_to_event(row: sqlite3.Row) -> Event:
     )
 
 
-def upsert_event(conn: sqlite3.Connection, event: Event) -> tuple[int, bool]:
+def upsert_event(conn: sqlite3.Connection, event: Event, insert: bool = True) -> tuple[int | None, bool]:
     """Save an event. Returns (id, is_new). An existing event is updated with the latest details
-    (a known image is kept if the source stops providing one)."""
+    (a known image is kept if the source stops providing one). With insert=False an event
+    that is not stored yet is left out, and the result is (None, False)."""
     values = (
         event.kind, event.category, event.title, json.dumps(event.artists, ensure_ascii=False),
         event.starts_at.isoformat(), event.ends_at.isoformat() if event.ends_at else None,
@@ -140,6 +142,8 @@ def upsert_event(conn: sqlite3.Connection, event: Event) -> tuple[int, bool]:
             (*values, row["id"]),
         )
         return row["id"], False
+    if not insert:
+        return None, False
     cur = conn.execute(
         """INSERT INTO events (source, external_id, kind, category, title, artists, starts_at, ends_at,
            venue, city, url, price, image_url, availability, tickets_left)
@@ -172,10 +176,36 @@ def add_user(conn: sqlite3.Connection, email: str) -> int:
 def add_subscription(
     conn: sqlite3.Connection, user_id: int, artist: str, venue: str | None = None
 ) -> None:
-    conn.execute(
-        "INSERT OR IGNORE INTO subscriptions (user_id, artist, venue) VALUES (?,?,?)",
-        (user_id, artist.strip(), (venue or "").strip() or None),
-    )
+    add_artist_venues(conn, user_id, artist, [venue] if venue else [])
+
+
+def add_artist_venues(conn: sqlite3.Connection, user_id: int, artist: str, venues: list[str]) -> None:
+    """Follow an artist at the given venues; an empty list means any venue.
+
+    Stored as one row per (artist, venue). Any venue replaces the artist's venue-specific
+    rows instead of sitting next to them. Specific venues are added to the ones already
+    followed, and change nothing while the artist is followed at any venue (that row
+    already covers them, and silently narrowing an alert would lose shows).
+    """
+    artist = " ".join(artist.split())
+    wanted = list(dict.fromkeys(canonical_venue(v) for v in venues if v and v.strip()))
+    if not wanted:
+        conn.execute(
+            "DELETE FROM subscriptions WHERE user_id = ? AND artist = ? AND venue IS NOT NULL",
+            (user_id, artist),
+        )
+        conn.execute(
+            "INSERT OR IGNORE INTO subscriptions (user_id, artist, venue) VALUES (?,?,NULL)",
+            (user_id, artist),
+        )
+    elif conn.execute(
+        "SELECT 1 FROM subscriptions WHERE user_id = ? AND artist = ? AND venue IS NULL",
+        (user_id, artist),
+    ).fetchone() is None:
+        conn.executemany(
+            "INSERT OR IGNORE INTO subscriptions (user_id, artist, venue) VALUES (?,?,?)",
+            [(user_id, artist, venue) for venue in wanted],
+        )
     conn.commit()
 
 
@@ -222,6 +252,65 @@ def upcoming_events(conn: sqlite3.Connection) -> list[tuple[int, Event]]:
         (datetime.now().isoformat(),),
     ).fetchall()
     return [(row["id"], row_to_event(row)) for row in rows]
+
+
+def ended_before(event: Event, cutoff: datetime) -> bool:
+    """Whether the event was over before cutoff: its end when known, otherwise its start."""
+    return (event.ends_at or event.starts_at) < cutoff
+
+
+def purge_ended_events(conn: sqlite3.Connection, cutoff: datetime) -> int:
+    """Delete events that were over before cutoff (same rule as ended_before). Their
+    notifications go with them (ON DELETE CASCADE). Returns how many were deleted."""
+    cur = conn.execute(
+        "DELETE FROM events WHERE COALESCE(ends_at, starts_at) < ?", (cutoff.isoformat(),)
+    )
+    conn.commit()
+    return cur.rowcount
+
+
+def image_urls(conn: sqlite3.Connection) -> set[str]:
+    """The image URLs of every stored event, for pruning the thumbnail cache."""
+    rows = conn.execute("SELECT DISTINCT image_url FROM events WHERE image_url IS NOT NULL")
+    return {row["image_url"] for row in rows}
+
+
+def canonicalize_venues(conn: sqlite3.Connection) -> tuple[int, int]:
+    """Rewrite stored venue names to their canonical spelling (see app/venues.py).
+
+    Events get the same spelling a fresh fetch would give them. A subscription's venue takes
+    the spelling of the stored events at that venue, so it keeps matching them and shows
+    under the same name in the venue picker; two of a user's subscriptions that turn out to
+    be the same venue are merged. Safe to run on every start. Returns (events, subscriptions)
+    changed.
+    """
+    rows = conn.execute("SELECT id, venue FROM events").fetchall()
+    cleaned = {row["id"]: canonical_venue(row["venue"]) for row in rows}
+    chosen = preferred_spellings(list(cleaned.values()))
+    event_updates = [
+        (chosen[cleaned[row["id"]]], row["id"])
+        for row in rows if chosen[cleaned[row["id"]]] != row["venue"]
+    ]
+    conn.executemany("UPDATE events SET venue = ? WHERE id = ?", event_updates)
+
+    by_key = {venue_key(name): name for name in chosen.values()}
+    changed = 0
+    for sub in conn.execute("SELECT id, user_id, artist, venue FROM subscriptions WHERE venue IS NOT NULL").fetchall():
+        target = canonical_venue(sub["venue"])
+        target = by_key.get(venue_key(target), target)
+        if target == sub["venue"]:
+            continue
+        changed += 1
+        taken = conn.execute(
+            "SELECT 1 FROM subscriptions WHERE user_id = ? AND artist = ? AND venue = ?",
+            (sub["user_id"], sub["artist"], target),
+        ).fetchone()
+        if taken:
+            conn.execute("DELETE FROM subscriptions WHERE id = ?", (sub["id"],))
+        else:
+            conn.execute("UPDATE subscriptions SET venue = ? WHERE id = ?", (target, sub["id"]))
+    conn.commit()
+    return len(event_updates), changed
 
 
 def event_image_url(conn: sqlite3.Connection, event_id: int) -> str | None:

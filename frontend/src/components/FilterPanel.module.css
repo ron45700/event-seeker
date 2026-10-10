@@ -1,0 +1,108 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.label {
+  padding: 0;
+  margin-bottom: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.labelNote {
+  font-weight: 500;
+}
+
+.sub {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.subLabel {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+/* Presets and months wrap; nothing scrolls sideways. */
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pill {
+  min-height: 40px;
+  padding-inline: 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* Inverted like the category control: amber is kept for followed artists. */
+.pill[aria-pressed='true'] {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--bg);
+}
+
+.dates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dateField {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.dateLabel {
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+}
+
+.dateInput {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding-inline: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface-raised);
+  /* 16px or more, so iOS does not zoom into the field. */
+  font-size: 1rem;
+}
+
+/* iOS draws an empty date input with no height and its value centred. */
+.dateInput::-webkit-date-and-time-value {
+  min-height: 1.5em;
+  text-align: start;
+}
+
+.toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.toggles > * {
+  width: 100%;
+}

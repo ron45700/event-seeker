@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- event seeker: a stage light finding the mic. Full-bleed square with its own
+       background, for dashboards, home screens and app tiles. Source: docs/brand/. -->
+  <defs>
+    <linearGradient id="beam" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f4b740"/>
+      <stop offset="1" stop-color="#f4b740" stop-opacity="0.55"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" fill="#10131c"/>
+  <rect x="24" y="7" width="16" height="7" rx="2.5" fill="#f4b740"/>
+  <path d="M26.5 15h11L51 50H13Z" fill="url(#beam)"/>
+  <ellipse cx="32" cy="50.5" rx="19.5" ry="5" fill="#f4b740"/>
+  <rect x="27.4" y="20.5" width="9.2" height="14" rx="4.6" fill="#10131c"/>
+  <path d="M27.4 27.6h9.2" stroke="#f4b740" stroke-width="1.4"/>
+  <rect x="30.6" y="34" width="2.8" height="15" fill="#10131c"/>
+  <ellipse cx="32" cy="50" rx="6.5" ry="1.7" fill="#10131c"/>
+</svg>

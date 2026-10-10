@@ -1,7 +1,8 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { useHeightVar } from '../lib/hooks'
-import { currentHash, hrefFor, navigate, signInHref, type Route, type RouteName } from '../lib/router'
+import { currentHash, hrefFor, signInHref, type Route, type RouteName } from '../lib/router'
 import { useSession } from '../lib/session'
+import { BrandMark } from './BrandMark'
 import { ChevronDownIcon, MoonIcon, StarIcon, SunIcon, TicketIcon } from './icons'
 import styles from './NavBar.module.css'
 import { SearchField } from './SearchField'
@@ -9,6 +10,8 @@ import { useToast } from './Toast'
 
 interface Props {
   route: Route
+  /** The events page with the current search and filters. */
+  showsLink: string
   query: string
   onQueryChange: (query: string) => void
 }
@@ -19,7 +22,7 @@ interface Props {
  * in the centre, the logo on the left. On a phone the search moves to its own sticky bar
  * and "my artists" to the bottom tab bar.
  */
-export function NavBar({ route, query, onQueryChange }: Props) {
+export function NavBar({ route, showsLink, query, onQueryChange }: Props) {
   const { me, ready } = useSession()
   const heightRef = useHeightVar('--topbar-h')
   const onArtists = route.name === 'artists'
@@ -47,18 +50,12 @@ export function NavBar({ route, query, onQueryChange }: Props) {
         </div>
 
         <div className={styles.search}>
-          <SearchField
-            value={query}
-            onChange={(next) => {
-              onQueryChange(next)
-              // Searching from another screen takes you to the results.
-              if (route.name !== 'shows') navigate(hrefFor('shows'))
-            }}
-          />
+          <SearchField value={query} onChange={onQueryChange} />
         </div>
 
-        <a href={hrefFor('shows')} className={styles.logo} lang="en" dir="ltr">
-          event seeker
+        <a href={showsLink} className={styles.logo} lang="en" dir="ltr">
+          <BrandMark className={styles.mark} />
+          <span className={styles.wordmark}>event seeker</span>
         </a>
       </div>
     </header>
@@ -157,7 +154,7 @@ const TABS: { route: RouteName; label: string; icon: (active: boolean) => ReactN
  * Bottom tab bar on phones, within thumb reach and above the home indicator. It switches
  * screens; the category is picked in the segmented control on the events screen.
  */
-export function TabBar({ route }: { route: Route }) {
+export function TabBar({ route, showsLink }: { route: Route; showsLink: string }) {
   return (
     <nav className={styles.tabbar} aria-label="ניווט ראשי">
       {TABS.map(({ route: target, label, icon }) => {
@@ -165,7 +162,7 @@ export function TabBar({ route }: { route: Route }) {
         return (
           <a
             key={target}
-            href={hrefFor(target)}
+            href={target === 'shows' ? showsLink : hrefFor(target)}
             className={styles.tabbarItem}
             aria-current={active ? 'page' : undefined}
           >

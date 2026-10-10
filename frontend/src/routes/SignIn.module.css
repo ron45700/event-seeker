@@ -77,3 +77,48 @@
   opacity: 0.6;
   cursor: progress;
 }
+
+/* Confirming an unknown address */
+
+.question {
+  margin-top: 12px;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.35;
+  text-wrap: balance;
+}
+
+.question:focus {
+  outline: none;
+}
+
+/* The address as typed, large and left-to-right, so a typo stands out. */
+.address {
+  margin-top: 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface-raised);
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.address + .lead {
+  margin: 12px 0 8px;
+}
+
+.secondary {
+  height: 52px;
+  margin-top: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: transparent;
+  font-weight: 600;
+  font-size: 1.0625rem;
+}
+
+.secondary:disabled {
+  opacity: 0.6;
+}

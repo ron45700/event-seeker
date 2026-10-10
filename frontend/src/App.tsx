@@ -1,16 +1,34 @@
 import { useEffect, useState } from 'react'
 import styles from './App.module.css'
 import { NavBar, TabBar } from './components/NavBar'
-import { useRoute } from './lib/router'
-import { NO_FILTERS, type ShowFilters } from './lib/search'
+import { categoryFromParam } from './lib/categories'
+import { navigate, replaceRoute, showsHref, useRoute } from './lib/router'
+import { sameFilters, type ShowFilters } from './lib/search'
 import { MyArtists } from './routes/MyArtists'
 import { Shows } from './routes/Shows'
 import { SignIn } from './routes/SignIn'
 
 export function App() {
   const route = useRoute()
-  // Kept here so search and filters survive a visit to another screen and a category change.
-  const [filters, setFilters] = useState<ShowFilters>(NO_FILTERS)
+  const onShows = route.name === 'shows'
+  const category = onShows ? categoryFromParam(route.category) : null
+  // The events page keeps its search and filters in the URL, so a reload or Back restores
+  // them. They are also held here: the input updates at once (the hash follows a moment
+  // later), and they survive a visit to another screen.
+  const [filters, setFilters] = useState<ShowFilters>(route.filters)
+
+  // The URL changed from outside: Back / Forward, a link, a typed address.
+  const urlFilters = route.filters
+  useEffect(() => {
+    if (onShows) setFilters((current) => (sameFilters(current, urlFilters) ? current : urlFilters))
+  }, [onShows, urlFilters])
+
+  function changeFilters(next: ShowFilters) {
+    setFilters(next)
+    // Replace, not push: Back leaves the page instead of undoing one keystroke at a time.
+    if (onShows) replaceRoute(showsHref(category, next))
+    else navigate(showsHref(null, next))
+  }
 
   useEffect(() => {
     window.scrollTo(0, 0)
@@ -18,13 +36,19 @@ export function App() {
 
   return (
     <div className={styles.app}>
-      <NavBar route={route} query={filters.query} onQueryChange={(query) => setFilters((f) => ({ ...f, query }))} />
+      <NavBar
+        route={route}
+        showsLink={showsHref(null, filters)}
+        query={filters.query}
+        // Searching from another screen takes you to the results.
+        onQueryChange={(query) => changeFilters({ ...filters, query })}
+      />
       <main className={styles.main}>
-        {route.name === 'shows' && <Shows route={route} filters={filters} onFiltersChange={setFilters} />}
+        {onShows && <Shows route={route} filters={filters} onFiltersChange={changeFilters} />}
         {route.name === 'artists' && <MyArtists />}
         {route.name === 'signin' && <SignIn />}
       </main>
-      <TabBar route={route} />
+      <TabBar route={route} showsLink={showsHref(null, filters)} />
     </div>
   )
 }

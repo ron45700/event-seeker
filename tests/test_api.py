@@ -27,8 +27,23 @@ def test_requires_login(client):
     assert client.post("/api/login", json={"email": "nope"}).status_code == 422
 
 
+def test_unknown_email_needs_confirmation_before_a_profile_is_created(client):
+    response = client.post("/api/login", json={"email": "typo@example.com"})
+    assert (response.status_code, response.json()["detail"]) == (404, "not registered")
+    assert "es_user" not in response.cookies
+    assert client.get("/api/me").status_code == 401
+
+    created = client.post("/api/login", json={"email": "Typo@Example.com ", "create": True})
+    assert created.json()["email"] == "typo@example.com"
+    client.post("/api/logout")
+    # a known address signs in without create, and create on a known one changes nothing
+    assert client.post("/api/login", json={"email": "typo@example.com"}).status_code == 200
+    assert client.post("/api/login", json={"email": "typo@example.com", "create": True}).status_code == 200
+    assert client.post("/api/login", json={"email": "bad", "create": True}).status_code == 422
+
+
 def test_login_subscribe_and_delete(client):
-    assert client.post("/api/login", json={"email": "Ron@Example.com"}).json() == {
+    assert client.post("/api/login", json={"email": "Ron@Example.com", "create": True}).json() == {
         "email": "ron@example.com", "paused": False, "theme": "dark"}
     subs = client.post("/api/subscriptions", json={"artist": "טונה", "venue": "בארבי"}).json()
     client.post("/api/subscriptions", json={"artist": "טונה", "venue": "בארבי"})  # duplicate
@@ -39,9 +54,9 @@ def test_login_subscribe_and_delete(client):
 
 
 def test_users_cannot_delete_each_others_subscriptions(client):
-    client.post("/api/login", json={"email": "a@example.com"})
+    client.post("/api/login", json={"email": "a@example.com", "create": True})
     sub_id = client.post("/api/subscriptions", json={"artist": "טונה"}).json()[0]["id"]
-    client.post("/api/login", json={"email": "b@example.com"})
+    client.post("/api/login", json={"email": "b@example.com", "create": True})
     assert client.delete(f"/api/subscriptions/{sub_id}").status_code == 404
 
 
@@ -52,14 +67,14 @@ def test_events_listing_filters_and_subscribed_flag(client):
     assert [e["title"] for e in client.get("/api/events", params={"q": "מוניקה"}).json()] == ["מוניקה סקס"]
     assert [e["title"] for e in client.get("/api/events", params={"venue": "בארבי"}).json()] == ["טונה"]
 
-    client.post("/api/login", json={"email": "a@example.com"})
+    client.post("/api/login", json={"email": "a@example.com", "create": True})
     client.post("/api/subscriptions", json={"artist": "טונה"})
     assert [e["subscribed"] for e in client.get("/api/events").json()] == [True, False]
     assert [e["title"] for e in client.get("/api/events", params={"mine": True}).json()] == ["טונה"]
 
 
 def test_pause_venues_and_health(client):
-    client.post("/api/login", json={"email": "a@example.com"})
+    client.post("/api/login", json={"email": "a@example.com", "create": True})
     assert client.patch("/api/me", json={"paused": True}).json()["paused"] is True
     assert client.get("/api/me").json()["paused"] is True
     assert client.get("/api/venues").json() == [
@@ -113,12 +128,12 @@ def test_thumbnail_missing_image_and_fallback(client, tmp_path, monkeypatch):
 
 
 def test_theme_is_saved_per_user_without_touching_pause(client):
-    client.post("/api/login", json={"email": "a@example.com"})
+    client.post("/api/login", json={"email": "a@example.com", "create": True})
     client.patch("/api/me", json={"paused": True})
     assert client.patch("/api/me", json={"theme": "light"}).json() == {
         "email": "a@example.com", "paused": True, "theme": "light"}
     assert client.patch("/api/me", json={"theme": "pink"}).status_code == 422
-    client.post("/api/login", json={"email": "b@example.com"})
+    client.post("/api/login", json={"email": "b@example.com", "create": True})
     assert client.get("/api/me").json()["theme"] == "dark"
 
 
@@ -129,3 +144,55 @@ def test_category_filter(client):
     assert [e["title"] for e in client.get("/api/events", params={"category": "standup"}).json()] == ["ערב סטנדאפ"]
     assert "ערב סטנדאפ" not in [e["title"] for e in client.get("/api/events", params={"category": "music"}).json()]
     assert len(client.get("/api/events").json()) == 3
+
+
+def _venues(subs):
+    return sorted((sub["artist"], sub["venue"] or "") for sub in subs)
+
+
+def test_subscribe_to_several_venues_and_any_venue_replaces_them(client):
+    client.post("/api/login", json={"email": "a@example.com", "create": True})
+    subs = client.post("/api/subscriptions", json={"artist": " אביתר  בנאי ", "venues": ["בארבי", "רידינג 3"]}).json()
+    assert _venues(subs) == [("אביתר בנאי", "בארבי"), ("אביתר בנאי", "רידינג 3")]
+
+    # more venues are added to the ones already followed
+    subs = client.post("/api/subscriptions", json={"artist": "אביתר בנאי", "venues": ["זאפה הרצליה", "בארבי"]}).json()
+    assert len(subs) == 3
+
+    # any venue replaces the venue-specific rows
+    subs = client.post("/api/subscriptions", json={"artist": "אביתר בנאי", "venues": []}).json()
+    assert _venues(subs) == [("אביתר בנאי", "")]
+
+    # and a specific venue does not narrow an artist followed everywhere
+    subs = client.post("/api/subscriptions", json={"artist": "אביתר בנאי", "venues": ["בארבי"]}).json()
+    assert _venues(subs) == [("אביתר בנאי", "")]
+
+    # the older single-venue body still works, and venues are stored canonical
+    subs = client.post("/api/subscriptions", json={"artist": "טונה", "venue": "אודיטוריום ספיר-כפר סבא"}).json()
+    assert ("טונה", "אודיטוריום ספיר - כפר סבא") in _venues(subs)
+
+
+def test_venue_spellings_are_listed_once_and_old_subscriptions_are_rewritten(client):
+    from app.api import app as api_app
+
+    conn = db.connect(app.state.db_path)
+    for i, venue in enumerate(["אודיטוריום ספיר - כפר סבא", "אודיטוריום ספיר-כפר סבא", "בית החייל - תל אביב"]):
+        db.upsert_event(conn, Event("s", f"v{i}", "x", datetime(2099, 2, 1), venue, "", "u"))
+    user_id = db.add_user(conn, "old@example.com")
+    # stored before canonical names existed: raw spellings, including two that are one venue
+    for venue in ["בית החייל תל אביב-סילבסטר", "אודיטוריום ספיר-כפר סבא", "אודיטוריום ספיר - כפר סבא"]:
+        conn.execute("INSERT INTO subscriptions (user_id, artist, venue) VALUES (?, 'טונה', ?)", (user_id, venue))
+    conn.commit()
+
+    with TestClient(api_app) as restarted:  # the rewrite runs on start-up
+        names = [v["venue"] for v in restarted.get("/api/venues").json()]
+        assert names.count("אודיטוריום ספיר - כפר סבא") == 1
+        assert "אודיטוריום ספיר-כפר סבא" not in names
+        restarted.post("/api/login", json={"email": "old@example.com"})
+        subs = restarted.get("/api/subscriptions").json()
+    assert sorted(sub["venue"] for sub in subs) == ["אודיטוריום ספיר - כפר סבא", "בית החייל - תל אביב"]
+
+    # and they still match the events, whose names were rewritten the same way
+    from app.matching import matches
+    events = {e.venue: e for _, e in db.upcoming_events(conn)}
+    assert all(matches(events[sub["venue"]], "x", sub["venue"]) for sub in subs)

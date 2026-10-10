@@ -71,12 +71,12 @@ Full interactive docs at `http://localhost:8765/docs` while the server is runnin
 
 | Method | Path | Description |
 |---|---|---|
-| POST | `/api/login` | Body: `{email}`. Returns `{email, paused, theme}` and sets a cookie |
+| POST | `/api/login` | Body: `{email, create?}`. Returns `{email, paused, theme}` and sets a cookie. An unknown email is 404 `not registered` unless `create: true` (the user confirms the address first) |
 | POST | `/api/logout` | |
 | GET | `/api/me` | `{email, paused, theme}`, or 401 when not signed in |
 | PATCH | `/api/me` | Body: `{paused?: bool, theme?: "dark" \| "light"}`. Only the fields sent change |
 | GET | `/api/subscriptions` | `[{id, artist, venue}]`. `venue: null` = any venue |
-| POST | `/api/subscriptions` | Body: `{artist, venue?}`. Returns the updated list |
+| POST | `/api/subscriptions` | Body: `{artist, venues: []}`; empty = any venue, which replaces the artist's venue-specific rows. One row is stored per venue. Returns the updated list |
 | DELETE | `/api/subscriptions/{id}` | 204 |
 | GET | `/api/events` | Query: `q`, `venue`, `category`, `mine`. Upcoming events ordered by date |
 | GET | `/api/venues` | `[{venue, city}]` for the filter and the subscription venue picker |

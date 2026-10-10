@@ -20,11 +20,31 @@ def fetch_bytes(url: str) -> bytes:
     return Source._get(url, {"Referer": origin, "Accept": "image/*"}).content
 
 
-def get_thumbnail(image_url: str) -> Path | None:
-    """Path of the cached thumbnail, creating it on first use. None if it cannot be made."""
+def thumbnail_path(image_url: str) -> Path:
     # keyed by the source URL, so a changed image gets a fresh thumbnail
     key = hashlib.sha1(f"{config.THUMB_WIDTH}:{image_url}".encode()).hexdigest()[:20]
-    path = config.THUMB_DIR / f"{key}.webp"
+    return config.THUMB_DIR / f"{key}.webp"
+
+
+def prune(keep_urls: set[str]) -> int:
+    """Delete cached thumbnails that belong to none of keep_urls: images of events that were
+    purged, images a source replaced, and sizes from an earlier THUMB_WIDTH. Images are often
+    shared (a comedian's photo on every date), so the cache is pruned against every stored
+    event rather than per deleted event. Returns how many files were deleted."""
+    if not config.THUMB_DIR.is_dir():
+        return 0
+    keep = {thumbnail_path(url).name for url in keep_urls}
+    removed = 0
+    for path in config.THUMB_DIR.glob("*.webp"):
+        if path.name not in keep:
+            path.unlink(missing_ok=True)
+            removed += 1
+    return removed
+
+
+def get_thumbnail(image_url: str) -> Path | None:
+    """Path of the cached thumbnail, creating it on first use. None if it cannot be made."""
+    path = thumbnail_path(image_url)
     if path.exists():
         return path
     try:

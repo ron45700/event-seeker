@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { AddArtistForm } from '../components/AddArtistForm'
 import { CloseIcon, TrashIcon } from '../components/icons'
 import { ShowGrid } from '../components/ShowGrid'
@@ -10,14 +10,17 @@ import { VenueBadge } from '../components/VenueBadge'
 import { api, isUnreachable } from '../lib/api'
 import { useEvents, useVenues, type Load } from '../lib/hooks'
 import { hrefFor, signInHref } from '../lib/router'
+import { atVenues } from '../lib/search'
 import { useSession } from '../lib/session'
+import { groupByArtist, type ArtistGroup } from '../lib/subscriptions'
 import type { Me, Subscription } from '../lib/types'
 import styles from './MyArtists.module.css'
 
 /** Whose shows the side panel lists. justAdded adds the "alerts start now" note. */
 interface Focus {
   artist: string
-  venue: string | null
+  /** Empty means any venue. */
+  venues: string[]
   justAdded: boolean
 }
 
@@ -64,30 +67,33 @@ function Following({ me }: { me: Me }) {
     }
   }, [attempt])
 
-  async function add(artist: string, venue: string | null) {
-    const data = await api.addSubscription(artist, venue)
+  async function add(artist: string, venues: string[]) {
+    const data = await api.addSubscription(artist, venues)
     setList({ status: 'ready', data })
-    setFocus({ artist, venue, justAdded: true })
+    // What was stored, which can be wider than what was picked (see add_artist_venues).
+    const name = artist.split(/\s+/).join(' ')
+    const stored = groupByArtist(data).find((group) => group.artist === name)
+    setFocus({ artist: name, venues: stored?.venues ?? venues, justAdded: true })
   }
 
-  async function remove(sub: Subscription) {
-    try {
-      await api.deleteSubscription(sub.id)
-    } catch {
-      toast({ message: <>ההסרה של <bdi>{sub.artist}</bdi> לא הצליחה. אפשר לנסות שוב.</> })
+  async function remove(group: ArtistGroup) {
+    const results = await Promise.allSettled(group.ids.map((id) => api.deleteSubscription(id)))
+    const removed = new Set(group.ids.filter((_, i) => results[i].status === 'fulfilled'))
+    setList((prev) =>
+      prev.status === 'ready' ? { status: 'ready', data: prev.data.filter((s) => !removed.has(s.id)) } : prev,
+    )
+    if (removed.size < group.ids.length) {
+      toast({ message: <>ההסרה של <bdi>{group.artist}</bdi> לא הצליחה. אפשר לנסות שוב.</> })
       return
     }
-    setList((prev) =>
-      prev.status === 'ready' ? { status: 'ready', data: prev.data.filter((s) => s.id !== sub.id) } : prev,
-    )
-    if (focus && focus.artist === sub.artist && focus.venue === sub.venue) setFocus(null)
+    if (focus?.artist === group.artist) setFocus(null)
     toast({
-      message: <>המעקב אחרי <bdi>{sub.artist}</bdi> הוסר</>,
+      message: <>המעקב אחרי <bdi>{group.artist}</bdi> הוסר</>,
       action: {
         label: 'ביטול',
         run: () => {
           api
-            .addSubscription(sub.artist, sub.venue)
+            .addSubscription(group.artist, group.venues)
             .then((data) => setList({ status: 'ready', data }))
             .catch(() => toast({ message: 'המעקב לא שוחזר. אפשר להוסיף אותו מחדש.' }))
         },
@@ -106,7 +112,7 @@ function Following({ me }: { me: Me }) {
     }
   }
 
-  const subs = list.status === 'ready' ? list.data : []
+  const groups = useMemo(() => (list.status === 'ready' ? groupByArtist(list.data) : []), [list])
 
   return (
     <div className={styles.page}>
@@ -119,9 +125,14 @@ function Following({ me }: { me: Me }) {
 
         <div className={styles.showsArea}>
           {focus ? (
-            <ArtistShows key={`${focus.artist}|${focus.venue}`} focus={focus} paused={me.paused} onClose={() => setFocus(null)} />
+            <ArtistShows
+              key={`${focus.artist}|${focus.venues.join('|')}`}
+              focus={focus}
+              paused={me.paused}
+              onClose={() => setFocus(null)}
+            />
           ) : (
-            subs.length > 0 && (
+            groups.length > 0 && (
               <p className={styles.hint}>אפשר לבחור אמן מהרשימה כדי לראות את ההופעות הקרובות.</p>
             )
           )}
@@ -130,7 +141,7 @@ function Following({ me }: { me: Me }) {
         <section className={styles.listArea} aria-labelledby="following-heading">
           <h2 id="following-heading" className={styles.subheading}>
             במעקב
-            {subs.length > 0 && <span className={styles.subcount}>{subs.length}</span>}
+            {groups.length > 0 && <span className={styles.subcount}>{groups.length}</span>}
           </h2>
 
           {list.status === 'loading' && <p className={styles.muted}>טוען את הרשימה…</p>}
@@ -146,36 +157,34 @@ function Following({ me }: { me: Me }) {
             </StateMessage>
           )}
 
-          {list.status === 'ready' && subs.length === 0 && (
+          {list.status === 'ready' && groups.length === 0 && (
             <StateMessage compact title="עדיין אין אמנים ברשימה">
               מוסיפים שם של אמן או להקה בטופס, ומקבלים אימייל כשמתפרסמת הופעה חדשה.
             </StateMessage>
           )}
 
-          {subs.length > 0 && (
+          {groups.length > 0 && (
             <ul className={styles.list}>
-              {subs.map((sub) => {
-                const selected = focus?.artist === sub.artist && focus.venue === sub.venue
+              {groups.map((group) => {
+                const selected = focus?.artist === group.artist
                 return (
-                  <li key={sub.id} className={styles.row}>
+                  <li key={group.artist} className={styles.row}>
                     <button
                       type="button"
                       className={styles.rowMain}
                       aria-pressed={selected}
-                      onClick={() => setFocus(selected ? null : { artist: sub.artist, venue: sub.venue, justAdded: false })}
+                      onClick={() =>
+                        setFocus(selected ? null : { artist: group.artist, venues: group.venues, justAdded: false })
+                      }
                     >
-                      <bdi className={styles.artist}>{sub.artist}</bdi>
-                      {sub.venue ? (
-                        <VenueBadge venue={sub.venue} />
-                      ) : (
-                        <span className={styles.anyVenue}>כל המקומות</span>
-                      )}
+                      <bdi className={styles.artist}>{group.artist}</bdi>
+                      <VenueList venues={group.venues} />
                     </button>
                     <button
                       type="button"
                       className={styles.delete}
-                      aria-label={`הסרת ${sub.artist} מהמעקב`}
-                      onClick={() => void remove(sub)}
+                      aria-label={`הסרת ${group.artist} מהמעקב`}
+                      onClick={() => void remove(group)}
                     >
                       <TrashIcon width={20} height={20} />
                     </button>
@@ -217,9 +226,26 @@ function Following({ me }: { me: Me }) {
   )
 }
 
+/** An artist's venues as badges, or "any venue". */
+function VenueList({ venues, className }: { venues: string[]; className?: string }) {
+  if (venues.length === 0) return <span className={styles.anyVenue}>כל המקומות</span>
+  return (
+    <span className={`${styles.venues} ${className ?? ''}`}>
+      {venues.map((venue) => (
+        <VenueBadge key={venue} venue={venue} />
+      ))}
+    </span>
+  )
+}
+
 function ArtistShows({ focus, paused, onClose }: { focus: Focus; paused: boolean; onClose: () => void }) {
-  // The server's own matching, so this is exactly what an alert would match.
-  const { state, retry } = useEvents({ q: focus.artist, venue: focus.venue ?? undefined }, '')
+  // The server's own matching on the name, so this is exactly what an alert would match;
+  // the venues are matched here the way the alerts match them.
+  const { state, retry } = useEvents({ q: focus.artist }, '')
+  const shows = useMemo(
+    () => (state.status === 'ready' ? state.data.filter((event) => atVenues(event, focus.venues)) : []),
+    [state, focus.venues],
+  )
 
   return (
     <section className={styles.panel} aria-labelledby="artist-shows-heading">
@@ -231,7 +257,7 @@ function ArtistShows({ focus, paused, onClose }: { focus: Focus; paused: boolean
           <CloseIcon />
         </button>
       </div>
-      {focus.venue && <VenueBadge venue={focus.venue} className={styles.panelVenue} />}
+      {focus.venues.length > 0 && <VenueList venues={focus.venues} className={styles.panelVenue} />}
 
       {focus.justAdded && (
         <p className={styles.note}>
@@ -252,19 +278,19 @@ function ArtistShows({ focus, paused, onClose }: { focus: Focus; paused: boolean
           {isUnreachable(state.error) ? 'אין חיבור לשרת.' : 'השרת החזיר שגיאה.'}
         </StateMessage>
       )}
-      {state.status === 'ready' && state.data.length === 0 && (
+      {state.status === 'ready' && shows.length === 0 && (
         <p className={styles.muted}>
           אין כרגע הופעות קרובות
-          {focus.venue && (
+          {focus.venues.length === 1 && (
             <>
               {' '}
-              ב<bdi>{focus.venue}</bdi>
+              ב<bdi>{focus.venues[0]}</bdi>
             </>
           )}
-          .
+          {focus.venues.length > 1 && ' במקומות האלה'}.
         </p>
       )}
-      {state.status === 'ready' && state.data.length > 0 && <ShowGrid events={state.data} />}
+      {state.status === 'ready' && shows.length > 0 && <ShowGrid events={shows} />}
     </section>
   )
 }

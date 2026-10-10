@@ -1,8 +1,9 @@
 """One run of the system: fetch all sources, detect new events, match subscriptions, send."""
 import logging
 import sqlite3
+from datetime import datetime, timedelta
 
-from app import config, db
+from app import config, db, thumbs
 from app.alerts import Alerter
 from app.matching import matches
 from app.models import Event
@@ -11,19 +12,29 @@ from app.sources.base import Source
 
 log = logging.getLogger(__name__)
 
+# An event counts as over this long after its end (or its start, when the end is unknown).
+# Until then it stays stored, so a show running late is not purged and re-added mid-run.
+ENDED_GRACE = timedelta(hours=6)
 
-def sync_source(conn: sqlite3.Connection, source: Source) -> tuple[list[tuple[int, Event]], int]:
+
+def sync_source(
+    conn: sqlite3.Connection, source: Source, now: datetime | None = None
+) -> tuple[list[tuple[int, Event]], int]:
     """Fetch and store one source. Returns the new events to check against subscriptions,
     and how many events the source returned in total.
 
     On a source's first sync all events are stored as a baseline with no alerts,
-    otherwise every show already listed on the site would count as new.
+    otherwise every show already listed on the site would count as new. An event that is
+    already over is never inserted: sites keep listing past shows for a while, and once
+    purged such a show would otherwise come back as a new event. A stored one is still
+    updated, so a date moved into the past takes its queued alert off the list.
     """
     events = source.fetch()
     first_sync = not db.is_source_synced(conn, source.name)
+    cutoff = (now or datetime.now()) - ENDED_GRACE
     new_events = []
     for event in events:
-        event_id, is_new = db.upsert_event(conn, event)
+        event_id, is_new = db.upsert_event(conn, event, insert=not db.ended_before(event, cutoff))
         if is_new:
             new_events.append((event_id, event))
     db.mark_source_synced(conn, source.name)
@@ -70,16 +81,26 @@ def track_health(
     conn.commit()
 
 
+def purge_ended(conn: sqlite3.Connection, now: datetime | None = None) -> None:
+    """Delete events that are over (with their queued alerts) and thumbnails nothing uses."""
+    removed = db.purge_ended_events(conn, (now or datetime.now()) - ENDED_GRACE)
+    pruned = thumbs.prune(db.image_urls(conn))
+    if removed or pruned:
+        log.info("purged %d ended event(s), %d cached thumbnail(s)", removed, pruned)
+
+
 def run_once(
     conn: sqlite3.Connection,
     sources: list[Source],
     notifier: Notifier | None,
     alerter: Alerter | None = None,
+    now: datetime | None = None,
 ) -> None:
+    now = now or datetime.now()
     new_events: list[tuple[int, Event]] = []
     for source in sources:
         try:
-            found, count = sync_source(conn, source)
+            found, count = sync_source(conn, source, now)
         except Exception as exc:
             # one failing source does not stop the others
             conn.rollback()
@@ -92,6 +113,13 @@ def run_once(
         if error:
             log.warning("%s: %s", source.name, error)
         track_health(conn, source.name, error, count, alerter)
+
+    try:
+        purge_ended(conn, now)
+    except Exception:
+        # housekeeping only: never let it stop the alerts below
+        conn.rollback()
+        log.exception("purging ended events failed")
 
     if new_events:
         for sub in db.list_subscriptions(conn, active_only=True):

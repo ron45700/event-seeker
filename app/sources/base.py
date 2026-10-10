@@ -8,6 +8,7 @@ import httpx
 from curl_cffi import requests as browser_requests
 
 from app.models import Event
+from app.venues import unify_venues
 
 log = logging.getLogger(__name__)
 
@@ -49,6 +50,8 @@ class Source(ABC):
                 continue
             if event is not None:
                 events.append(event)
+        # one spelling per real venue, whatever the site typed (see app/venues.py)
+        unify_venues(events)
         return events
 
     @staticmethod

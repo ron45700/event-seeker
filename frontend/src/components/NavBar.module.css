@@ -54,18 +54,74 @@
   }
 }
 
+/* The mark, then the wordmark (left to right).
+
+   Every size here is whole pixels, and the logo's height (--logo-size + --nudge) has the
+   same parity as the header row, so the logo lands on whole pixels too. Then the text
+   baseline and the mark snap the same way at every pixel density, and the alignment below
+   holds on 1x, 2x and 3x screens alike (fractional sizes moved it by up to a pixel).
+
+   --mark-drop centres the mark on the letters' ink, not on the line box: Karantina's ink
+   sits low in its box, so the mark is moved down until it overhangs the tallest letters and
+   the baseline by the same amount. Measured from rendered pixels at each size. */
 .logo {
+  --logo-size: 40px;
+  --mark-size: 34px;
+  --nudge: 6px;
+  --mark-drop: 3px;
   grid-area: logo;
   justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 2.5rem;
+  font-size: var(--logo-size);
   line-height: 1;
   letter-spacing: 0.01em;
   white-space: nowrap;
   text-decoration: none;
+}
+
+/* Narrow phones: the mark and wordmark shrink together so the row never runs past the
+   screen beside the sign-in and theme buttons. */
+@media (max-width: 399px) {
+  .logo {
+    --logo-size: 34px;
+    --mark-size: 30px;
+    --nudge: 6px;
+    --mark-drop: 2.5px;
+    gap: 7px;
+  }
+}
+
+@media (max-width: 349px) {
+  .logo {
+    --logo-size: 28px;
+    --mark-size: 24px;
+    --nudge: 4px;
+    --mark-drop: 2.25px;
+    gap: 6px;
+  }
+}
+
+.mark {
+  flex: none;
+  width: var(--mark-size);
+  height: var(--mark-size);
+  translate: 0 var(--mark-drop);
+}
+
+/* On the dark page the tile disappears and only the light shows. It sits a little high in
+   its tile (lamp top at 7/64, pool bottom at 55.5/64), so it drops a further half pixel to
+   balance on the letters by what is actually visible. */
+:root:not([data-theme='light']) .mark {
+  translate: 0 calc(var(--mark-drop) + 0.5px);
+}
+
+.wordmark {
   /* Karantina sits high on its line; nudge it onto the shared baseline. */
-  padding-top: 6px;
+  padding-top: var(--nudge);
 }
 
 .signIn {

@@ -108,3 +108,11 @@ export function TrashIcon(props: SVGProps<SVGSVGElement>) {
     </Icon>
   )
 }
+
+export function CheckIcon(props: SVGProps<SVGSVGElement>) {
+  return (
+    <Icon {...props}>
+      <path d="m5 12.5 4.5 4.5L19 7.5" strokeWidth="2.4" />
+    </Icon>
+  )
+}

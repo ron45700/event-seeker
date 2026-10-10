@@ -7,7 +7,8 @@ interface Session {
   me: Me | null
   /** False until the first /api/me answer (or failure) arrives. */
   ready: boolean
-  signIn(email: string): Promise<void>
+  /** Rejects with ApiError 404 for an unknown address unless `create` is set. */
+  signIn(email: string, create?: boolean): Promise<void>
   signOut(): Promise<void>
   setPaused(paused: boolean): Promise<void>
   theme: Theme
@@ -45,7 +46,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (accountTheme) showTheme(accountTheme)
   }, [accountTheme, showTheme])
 
-  const signIn = useCallback(async (email: string) => setMe(await api.login(email)), [])
+  const signIn = useCallback(async (email: string, create = false) => setMe(await api.login(email, create)), [])
   const signOut = useCallback(async () => {
     await api.logout()
     setMe(null)

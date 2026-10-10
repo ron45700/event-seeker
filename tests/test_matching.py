@@ -30,3 +30,14 @@ def test_matches_guests_and_venue():
     assert matches(event, "חיים רומנו", venue="תל אביב")
     assert not matches(event, "חיים רומנו", venue="רידינג")
     assert not matches(event, "טונה")
+
+
+def test_title_that_contains_the_name():
+    # a name followed in "My artists" matches longer titles that contain it as whole words
+    assert matches(make("אביתר בנאי והלהקה"), "אביתר בנאי")
+    assert matches(make("אביתר בנאי - מופע אקוסטי"), "אביתר בנאי")
+    assert matches(make("מופע השקה: אביתר בנאי"), "אביתר בנאי")
+    assert matches(make("ערב שירים", artists=["אביתר בנאי"]), "אביתר בנאי")
+    # but not a different word that starts the same, nor half of the name
+    assert not matches(make("אביתר בנאיים"), "אביתר בנאי")
+    assert not matches(make("אביתר כהן"), "אביתר בנאי")

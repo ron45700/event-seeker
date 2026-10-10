@@ -133,6 +133,16 @@
   color: var(--text-muted);
 }
 
+/* An artist followed at several venues: the badges wrap at the row's end. */
+.venues {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: 0;
+  max-width: 60%;
+}
+
 .delete,
 .iconButton {
   flex: none;
@@ -209,6 +219,8 @@
 
 .panelVenue {
   align-self: flex-start;
+  justify-content: flex-start;
+  max-width: none;
 }
 
 .note {

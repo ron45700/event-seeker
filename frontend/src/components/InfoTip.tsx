@@ -17,6 +17,8 @@ interface Props {
   label: string
   text: string
   className?: string
+  /** "poster" (the default) is a disc over a card's image; "inline" sits in running text, e.g. beside a field label. */
+  variant?: 'poster' | 'inline'
 }
 
 /**
@@ -25,7 +27,7 @@ interface Props {
  * rendered on <body> with fixed positioning, so no card mask or overflow can clip it, and
  * placed to stay inside the screen.
  */
-export function InfoTip({ label, text, className }: Props) {
+export function InfoTip({ label, text, className, variant = 'poster' }: Props) {
   const [mode, setMode] = useState<Mode>('closed')
   const [place, setPlace] = useState<TipPlacement | null>(null)
   const buttonRef = useRef<HTMLButtonElement>(null)
@@ -86,6 +88,7 @@ export function InfoTip({ label, text, className }: Props) {
         ref={buttonRef}
         type="button"
         className={`${styles.button} ${className ?? ''}`}
+        data-variant={variant}
         aria-label={label}
         aria-describedby={open ? tipId : undefined}
         aria-expanded={hoverCapable ? undefined : mode === 'pinned'}

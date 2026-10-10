@@ -82,6 +82,10 @@ Venue badge colours come from the venue name; fixed hues for known venues are in
 Cards load images through `/api/events/{id}/thumbnail`, which downsizes the venue image to a
 WebP once and caches it in `data/thumbs/` (safe to delete; `THUMB_WIDTH` sets the size).
 
+Every run deletes events that are over (their end, or their start when there is none, more
+than 6 hours ago) and the cached thumbnails no stored event uses any more. A past show that a
+site still lists is not stored again, so it never comes back as a new event.
+
 ## Layout
 
 | File | Role |
@@ -90,6 +94,7 @@ WebP once and caches it in `data/thumbs/` (safe to delete; `THUMB_WIDTH` sets th
 | `app/sources/` | One source per site. `base.py` is the base class, `__init__.py` is the list of active sources |
 | `app/db.py` | SQLite: users, subscriptions, events, notifications |
 | `app/matching.py` | Matching a subscription against an event |
+| `app/venues.py` | One display name per venue, whatever spelling a site uses |
 | `app/pipeline.py` | One run: fetch, detect new events, match, send |
 | `app/notifier.py` | Sending the alert emails |
 | `app/alerts.py` | Operator alerts (Telegram) |
@@ -115,4 +120,8 @@ WebP once and caches it in `data/thumbs/` (safe to delete; `THUMB_WIDTH` sets th
 3. Add a sample response under `tests/fixtures/` and a test modelled on `tests/test_barby.py`.
 
 Each event carries its own venue and city, so one source can cover several venues.
+Venue names are cleaned for every source in `Source.fetch()` (`app/venues.py`): spacing,
+separators, occasion notes such as "סילבסטר", and one spelling per venue. When the same hall
+still shows up twice in `/api/venues` under different words, add the pair to `_ALIASES` there;
+stored events and subscriptions are rewritten on the next start.
 For a festival: `kind="festival"`, the lineup in `artists`, and `ends_at` for a multi-day event.

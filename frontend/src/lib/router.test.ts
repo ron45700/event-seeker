@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { hrefFor, parseHash, signInHref } from './router'
+import { hrefFor, parseHash, showsHref, signInHref } from './router'
+import { NO_FILTERS } from './search'
 
 describe('parseHash', () => {
   it('reads the screen', () => {
@@ -20,6 +21,39 @@ describe('parseHash', () => {
   it('accepts only an in-app hash as the place to return to', () => {
     expect(parseHash(`#/signin?next=${encodeURIComponent('#/?follow=7')}`).next).toBe('#/?follow=7')
     expect(parseHash(`#/signin?next=${encodeURIComponent('https://example.com')}`).next).toBeNull()
+  })
+})
+
+describe('filters in the URL', () => {
+  it('round-trips every filter', () => {
+    const filters = {
+      query: 'אביתר בנאי',
+      venues: ['בארבי', 'זאפה תל אביב'],
+      date: '2026-11-03..2026-11-10',
+      mine: true,
+      hideOffSale: true,
+    }
+    const route = parseHash(showsHref('music', filters))
+    expect(route.filters).toEqual(filters)
+    expect(route.category).toBe('music')
+  })
+
+  it('leaves no trace with no filters', () => {
+    expect(showsHref(null, NO_FILTERS)).toBe('#/')
+    expect(parseHash('#/').filters).toEqual(NO_FILTERS)
+  })
+
+  it('drops a date it does not understand', () => {
+    expect(parseHash('#/?date=yesterday').filters.date).toBe('')
+    expect(parseHash('#/?date=2026-13').filters.date).toBe('')
+    expect(parseHash('#/?date=weekend').filters.date).toBe('weekend')
+  })
+
+  it('keeps the filters through sign-in and a follow', () => {
+    const back = showsHref('standup', { ...NO_FILTERS, venues: ['בארבי'] }, { follow: 7 })
+    const route = parseHash(parseHash(signInHref(back)).next!)
+    expect(route.follow).toBe(7)
+    expect(route.filters.venues).toEqual(['בארבי'])
   })
 })
 

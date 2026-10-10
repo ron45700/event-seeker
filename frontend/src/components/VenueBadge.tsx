@@ -10,7 +10,8 @@ interface Props {
 export function VenueBadge({ venue, className }: Props) {
   return (
     <span className={`${styles.badge} ${className ?? ''}`} {...venueProps(venue)}>
-      <bdi>{venue}</bdi>
+      {/* Right-to-left even when the name starts with a Latin word ("Babu bar - תל אביב") */}
+      <bdi dir="rtl">{venue}</bdi>
     </span>
   )
 }

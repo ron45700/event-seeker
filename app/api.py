@@ -20,6 +20,7 @@ from app.matching import contains_term, matches
 from app.notifier import get_notifier
 from app.pipeline import run_once
 from app.sources import ALL_SOURCES
+from app.venues import venue_key
 
 log = logging.getLogger(__name__)
 
@@ -39,6 +40,14 @@ def _scheduler(stop: threading.Event) -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Venue names stored before canonical spellings existed, including subscription venues
+    conn = db.connect(app.state.db_path)
+    try:
+        events, subs = db.canonicalize_venues(conn)
+        if events or subs:
+            log.info("venue names: %d event(s) and %d subscription(s) rewritten", events, subs)
+    finally:
+        conn.close()
     stop = threading.Event()
     if app.state.run_scheduler:
         threading.Thread(target=_scheduler, args=(stop,), daemon=True).start()
@@ -68,11 +77,15 @@ def current_user(request: Request, conn=Depends(get_conn)):
 
 class LoginBody(BaseModel):
     email: str
+    # Register the address if it is unknown. Without it an unknown address gets a 404, so a
+    # typo is caught by the user (who is asked to confirm) instead of becoming a profile.
+    create: bool = False
 
 
 class SubscriptionBody(BaseModel):
     artist: str
-    venue: str | None = None
+    venues: list[str] = []
+    venue: str | None = None  # older single-venue form, used when venues is empty
 
 
 class MeBody(BaseModel):
@@ -86,11 +99,15 @@ def _me(user) -> dict:
 
 @app.post("/api/login")
 def login(body: LoginBody, response: Response, conn=Depends(get_conn)):
-    """Log in or sign up. An unknown email is registered automatically."""
+    """Log in, or sign up with create=true. An unknown email without create is a 404
+    ("not registered"); there is no verification step, so the user confirms the address."""
     email = body.email.strip().lower()
     if not EMAIL_RE.match(email):
         raise HTTPException(422, "invalid email")
-    db.add_user(conn, email)
+    if db.get_user(conn, email) is None:
+        if not body.create:
+            raise HTTPException(404, "not registered")
+        db.add_user(conn, email)
     response.set_cookie(COOKIE, email, max_age=60 * 60 * 24 * 365, httponly=True, samesite="lax")
     return _me(db.get_user(conn, email))
 
@@ -130,11 +147,17 @@ def list_subscriptions(user=Depends(current_user), conn=Depends(get_conn)):
 
 @app.post("/api/subscriptions", status_code=201)
 def add_subscription(body: SubscriptionBody, user=Depends(current_user), conn=Depends(get_conn)):
-    """Empty venue = any venue. An identical existing subscription is not duplicated."""
+    """Follow an artist at a list of venues; an empty list = any venue.
+
+    One row is stored per venue. Any venue replaces the artist's venue-specific rows; specific
+    venues are added to the ones already followed (see db.add_artist_venues). Identical
+    subscriptions are not duplicated. Returns the full updated list.
+    """
     artist = body.artist.strip()
     if not artist:
         raise HTTPException(422, "artist is required")
-    db.add_subscription(conn, user["id"], artist, body.venue)
+    venues = body.venues or ([body.venue] if body.venue else [])
+    db.add_artist_venues(conn, user["id"], artist, venues)
     return [_subscription(row) for row in db.list_subscriptions(conn, user["id"])]
 
 
@@ -212,9 +235,15 @@ def event_thumbnail(event_id: int, conn=Depends(get_conn)):
 
 @app.get("/api/venues")
 def list_venues(conn=Depends(get_conn)):
-    """Venues that have upcoming events, for the filter and the subscription venue picker."""
-    venues = {(event.venue, event.city) for _, event in db.upcoming_events(conn)}
-    return [{"venue": venue, "city": city} for venue, city in sorted(venues)]
+    """Venues that have upcoming events, for the filter and the subscription venue picker.
+
+    One entry per venue: names are canonical already (app/venues.py), and names that still
+    differ only in punctuation are listed once.
+    """
+    venues: dict[str, tuple[str, str]] = {}
+    for _, event in db.upcoming_events(conn):
+        venues.setdefault(venue_key(event.venue), (event.venue, event.city))
+    return [{"venue": venue, "city": city} for venue, city in sorted(venues.values())]
 
 
 def _utc(timestamp: str | None) -> datetime | None:

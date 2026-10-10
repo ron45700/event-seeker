@@ -28,6 +28,25 @@
   position: relative;
 }
 
+/* Inline: the bare icon in the muted text colour, with the same 44px target. */
+.button[data-variant='inline'] {
+  color: var(--text-muted);
+}
+
+.button[data-variant='inline']::before {
+  display: none;
+}
+
+.button[data-variant='inline'][aria-expanded='true'] {
+  color: var(--text);
+}
+
+@media (hover: hover) {
+  .button[data-variant='inline']:hover {
+    color: var(--text);
+  }
+}
+
 .tip {
   position: fixed;
   z-index: 60;

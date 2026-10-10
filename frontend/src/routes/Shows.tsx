@@ -7,10 +7,19 @@ import { StateMessage } from '../components/StateMessage'
 import { useToast } from '../components/Toast'
 import { isUnreachable } from '../lib/api'
 import { CATEGORY_LABELS, categoryFromParam } from '../lib/categories'
+import { dateFilterPhrase, eventMonths, israelToday } from '../lib/dates'
 import { eventCount, groupByMonth } from '../lib/format'
 import { useEvents } from '../lib/hooks'
-import { hrefFor, navigate, replaceRoute, signInHref, type Route } from '../lib/router'
-import { applyFilters, inCategory, NO_FILTERS, venueChoices, type ShowFilters } from '../lib/search'
+import { hrefFor, navigate, replaceRoute, showsHref, signInHref, type Route } from '../lib/router'
+import {
+  activeFilterCount,
+  applyFilters,
+  inCategory,
+  venueChoices,
+  withoutPanelFilters,
+  NO_FILTERS,
+  type ShowFilters,
+} from '../lib/search'
 import { useSession } from '../lib/session'
 import type { ShowEvent } from '../lib/types'
 import styles from './Shows.module.css'
@@ -35,29 +44,32 @@ export function Shows({ route, filters, onFiltersChange }: Props) {
   const mine = filters.mine && signedIn
   const [following, setFollowing] = useState<ShowEvent | null>(null)
 
+  const today = israelToday()
+
   const events = state.status === 'ready' ? state.data : NO_EVENTS
   const categoryEvents = useMemo(() => inCategory(events, category), [events, category])
-  const venues = useMemo(() => venueChoices(categoryEvents, filters.venue), [categoryEvents, filters.venue])
-  const { venue, hideOffSale } = filters
+  const venues = useMemo(() => venueChoices(categoryEvents, filters.venues), [categoryEvents, filters.venues])
+  const months = useMemo(() => eventMonths(categoryEvents), [categoryEvents])
+  const { venues: venueFilter, date, hideOffSale } = filters
   const visible = useMemo(
-    () => applyFilters(categoryEvents, { query, venue, mine, hideOffSale }),
-    [categoryEvents, query, venue, mine, hideOffSale],
+    () => applyFilters(categoryEvents, { query, venues: venueFilter, date, mine, hideOffSale }, null, today),
+    [categoryEvents, query, venueFilter, date, mine, hideOffSale, today],
   )
   const groups = useMemo(() => groupByMonth(visible), [visible])
 
   function startFollow(event: ShowEvent) {
     if (signedIn) setFollowing(event)
-    else navigate(signInHref(hrefFor('shows', { category, follow: event.id })))
+    else navigate(signInHref(showsHref(category, filters, { follow: event.id })))
   }
 
   // Back from sign-in with ?follow=<id>: drop the parameter and open the form for that event.
   const followId = route.follow
   useEffect(() => {
     if (followId === null || state.status !== 'ready') return
-    replaceRoute(hrefFor('shows', { category }))
+    replaceRoute(showsHref(category, filters))
     const event = state.data.find((e) => e.id === followId)
     if (event && signedIn && !event.subscribed) setFollowing(event)
-  }, [followId, state, signedIn, category])
+  }, [followId, state, signedIn, category, filters])
 
   return (
     <>
@@ -67,8 +79,11 @@ export function Shows({ route, filters, onFiltersChange }: Props) {
         onChange={onFiltersChange}
         category={category}
         venues={venues}
+        months={months}
+        today={today}
         signedIn={signedIn}
-        onMineNeedsSignIn={() => navigate(signInHref(hrefFor('shows', { category })))}
+        // Back from sign-in with the toggle already on.
+        onMineNeedsSignIn={() => navigate(signInHref(showsHref(category, { ...filters, mine: true })))}
         matching={visible.length}
       />
 
@@ -98,7 +113,7 @@ export function Shows({ route, filters, onFiltersChange }: Props) {
         {state.status === 'ready' && events.length > 0 && category && categoryEvents.length === 0 && (
           <StateMessage
             title={`עדיין אין כאן אירועי ${CATEGORY_LABELS[category]}`}
-            action={{ label: 'לכל האירועים', href: hrefFor('shows') }}
+            action={{ label: 'לכל האירועים', href: showsHref(null, filters) }}
           >
             אף אחד מהמקומות לא פרסם עדיין אירועים מהסוג הזה. הלוח מתעדכן פעם בשעה, והם יופיעו כאן
             כשיתפרסמו.
@@ -109,8 +124,9 @@ export function Shows({ route, filters, onFiltersChange }: Props) {
           <NoMatches
             filters={{ ...filters, query, mine }}
             category={category}
+            today={today}
             followsAnything={categoryEvents.some((event) => event.subscribed)}
-            onClear={() => onFiltersChange(NO_FILTERS)}
+            onChange={onFiltersChange}
           />
         )}
 
@@ -142,12 +158,14 @@ export function Shows({ route, filters, onFiltersChange }: Props) {
 interface NoMatchesProps {
   filters: ShowFilters
   category: string | null
+  today: string
   followsAnything: boolean
-  onClear: () => void
+  onChange: (filters: ShowFilters) => void
 }
 
-function NoMatches({ filters, category, followsAnything, onClear }: NoMatchesProps) {
-  const onlyMine = filters.mine && !filters.query && !filters.venue && !filters.hideOffSale
+/** Nothing matches: say which filters are in the way and offer the shortest way out. */
+function NoMatches({ filters, category, today, followsAnything, onChange }: NoMatchesProps) {
+  const onlyMine = filters.mine && !filters.query && activeFilterCount(filters) === 1
   if (onlyMine && !followsAnything) {
     return (
       <StateMessage
@@ -159,8 +177,16 @@ function NoMatches({ filters, category, followsAnything, onClear }: NoMatchesPro
     )
   }
 
+  // The search alone, the filters alone, or both: clear exactly what is set.
+  const panelFilters = activeFilterCount(filters) > 0
+  const action = !panelFilters
+    ? { label: 'ניקוי החיפוש', onClick: () => onChange(NO_FILTERS) }
+    : filters.query.trim()
+      ? { label: 'ניקוי החיפוש והסינון', onClick: () => onChange(NO_FILTERS) }
+      : { label: 'ניקוי הסינון', onClick: () => onChange(withoutPanelFilters(filters)) }
+
   return (
-    <StateMessage title="אין אירועים שמתאימים" action={{ label: 'ניקוי החיפוש והסינון', onClick: onClear }}>
+    <StateMessage title="אין אירועים שמתאימים" action={action}>
       לא נמצא אירוע
       {filters.query && (
         <>
@@ -169,11 +195,13 @@ function NoMatches({ filters, category, followsAnything, onClear }: NoMatchesPro
         </>
       )}
       {category && <> בקטגוריה {CATEGORY_LABELS[category]}</>}
-      {filters.venue && (
+      {filters.date && <> {dateFilterPhrase(filters.date, today)}</>}
+      {filters.venues.length === 1 && (
         <>
-          {' '}ב<bdi>{filters.venue}</bdi>
+          {' '}ב<bdi>{filters.venues[0]}</bdi>
         </>
       )}
+      {filters.venues.length > 1 && <> באף אחד מ־{filters.venues.length} המקומות שנבחרו</>}
       {filters.mine && ' בין האמנים שלך'}
       {filters.hideOffSale && ' שעדיין אפשר לקנות אליו כרטיסים'}.
     </StateMessage>
